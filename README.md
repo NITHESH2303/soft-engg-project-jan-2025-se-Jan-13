@@ -42,12 +42,18 @@ This project focuses on developing an AI-driven agent to enhance the learning ex
    pip install poetry
    ```
 
+
 4. **Navigate to the Platform Directory**  
    ```bash
    cd backend/platform
    ```
+5. **Install Dependencies**  
+   Install all the dependencies using:  
+   ```bash
+   poetry install
+   ```
 
-5. **Run the Application**  
+6. **Run the Application**  
    Use the following command to start the backend:  
    ```bash
    poetry run python -m ai_platform
@@ -65,12 +71,6 @@ poetry run pytest
 
 ---
 
-## Contributing
-We welcome contributions to improve the AI Agent for Academic Guidance. Please adhere to the following steps:  
-1. Fork the repository.  
-2. Create a new branch (`feature/your-feature-name`).  
-3. Commit your changes.  
-4. Submit a pull request for review.  
 
 ---
 
@@ -80,4 +80,4 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 ---
 
 ## Contact
-For any inquiries or issues, feel free to contact Team 13 at **team13@iitm.ac.in**.
+For any inquiries or issues, feel free to contact Team 13.
