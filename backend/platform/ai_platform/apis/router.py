@@ -1,0 +1,7 @@
+from fastapi.routing import APIRouter
+
+from ai_platform.apis import monitoring
+
+api_router = APIRouter()
+
+api_router.include_router(monitoring.router, prefix="/monitoring", tags=["monitoring"])
