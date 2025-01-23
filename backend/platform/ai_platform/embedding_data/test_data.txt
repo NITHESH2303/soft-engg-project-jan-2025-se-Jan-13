@@ -1,0 +1,45 @@
+AI Agent for Academic Guidance
+Project Overview
+The primary way in which learners engage with content in the IITM BS degree program is through the SEEK portal. The portal contains learning videos, assignments, resources, practice and graded assignments, and programming quizzes. The portal can be described as a learning environment and provides opportunities for self-learning, by enabling learners to learn at their own pace and schedule.
+Project Goals
+With the rapid advancement of generative AI (GenAI) technologies, there are promising possibilities of effective integration of GenAI into these learning environments. The goal of this project is to develop an AI agent that enhances the learning experience for students enrolled in the IITM BS program.
+Key Objectives
+Serve as a virtual guide for students
+
+Help students navigate course material
+
+Improve student study habits
+
+Promote adherence to academic integrity principles
+Agent Characteristics
+The agent will be designed with the following core principles:
+
+No Direct Answers: Instead of providing solutions, the agent will:
+
+Suggest relevant learning strategies
+
+Direct students to reference materials
+
+Guide students to appropriate course content
+
+Course-Specific Guidance:
+
+Dynamically reflect practice assignments and available resources
+
+Use contextually relevant resources
+
+Point students to credible academic references and official materials
+
+Primary Focus: Support the student community and foster a collaborative learning environment
+Technical Constraints
+1. Standard Conversational Features
+Conversation threading to maintain context across interactions
+
+Artifacts storage for key interactions and recommendations
+
+Adherence to rate limits and a defined context window
+2. Retrieval-Augmented Generation (RAG) Architecture
+Implement a RAG system to handle common queries
+Innovative Approach
+The project encourages innovative solutions beyond the provided examples, focusing on enhancing student learning experiences through AI-powered guidance.
+

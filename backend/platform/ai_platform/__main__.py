@@ -1,7 +1,8 @@
 import uvicorn
 
 # from ai_platform.settings import settings
-
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 def main() -> None:
     """Entrypoint of the application."""
