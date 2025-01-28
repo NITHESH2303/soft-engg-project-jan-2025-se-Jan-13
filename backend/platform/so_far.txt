@@ -1,0 +1,14 @@
+
+
+date 28-01-2025
+
+
+1. Created schema directory- we will have all the pydantic schemas here
+2. Created supafast/model directory - we will have all the models(aka: tables) here
+
+3. installed new module alembic - to manage database
+
+Youtube tutorial on Fastapi supabase
+(https://www.youtube.com/watch?v=6ipV_yAP5I4)
+
+Learn about Supabase alembic and fastapi [https://dev.to/j0/setting-up-fastapi-with-supabasedb-2jm0]()
