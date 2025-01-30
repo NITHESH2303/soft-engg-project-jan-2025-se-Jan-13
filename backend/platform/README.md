@@ -6,3 +6,15 @@
 
 
 ## poetry env info --path  
+
+
+
+## How to Work With alembic 
+
+## alembic init migrations-  It will create the migrations directory which will have all the migration
+versions.
+It will also create the alembic.ini and env.py inside it to control the migration flow
+
+Note: Do not exectute this command if migrations directory already created under
+backend/platform
+
