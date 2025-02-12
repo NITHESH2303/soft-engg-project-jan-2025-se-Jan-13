@@ -1,8 +1,32 @@
-export default function Button({ label, onClick }: { label:string, onClick: ()=>void }){
-  return(
-    <button className='w-full mt-2 mb-3 py-2 bg-teal-500 shadow-md shadow-teal-300/50 hover:shadow-teal-400/50 hover:bg-teal-600 text-white font-semibold rounded-lg'
-            onClick={onClick}>
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+export default function Button({ 
+  label, 
+  onClick, 
+  variant = 'primary',
+  size = 'md',
+  className = ''
+}: ButtonProps) {
+  const sizeClasses = {
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-3',
+    lg: 'px-8 py-4 text-lg'
+  };
+
+  const baseClasses = variant === 'primary' ? 'btn-primary' : 'btn-secondary';
+  
+  return (
+    <button 
+      className={`${baseClasses} ${sizeClasses[size]} ${className} animate-scale-in`}
+      onClick={onClick}
+    >
       {label}
     </button>
-  )
+  );
 }

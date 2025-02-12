@@ -2,6 +2,7 @@ import { useState } from "react"
 import Button from "./ui/Button"
 import InputPassword from "./ui/InputPassword"
 import InputText from "./ui/InputText"
+import { Link } from "react-router-dom"
 
 export default function SignupComponent(){
   const [password, setPassword] = useState('')
@@ -14,26 +15,67 @@ export default function SignupComponent(){
   }
 
   return(
-    <form className='max-w-[400px] w-full mx-auto rounded-lg bg-gray-900 p-8 px-8'>
-      <h2 className='text-4xl dark:text-white font-bold text-center'>SignUp</h2>
+    <div className="w-full max-w-md transform transition-all duration-300 ease-in-out hover:scale-[1.01]">
+      <form className='backdrop-blur-md bg-white/10 rounded-2xl p-8 shadow-xl border border-white/20'>
+        <h2 className='text-4xl font-bold text-center bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-8 transform transition-all duration-500 hover:scale-105'>Create Account</h2>
+        
+        <div className='space-y-6 transform transition-all duration-300'>
+          <div className='relative transform transition-all duration-300 hover:translate-x-1'>
+            <InputText 
+              label="Full Name" 
+              placeholder="John Doe" 
+              type="text" 
+              setter={setName}
+            />
+          </div>
 
-      <div className='flex flex-col text-gray-400 py-2'>
-          <InputText label="Full Name" placeholder="Full Name" type="text" setter={setName}/>
-      </div>
-      <div className='flex flex-col text-gray-400 py-2'>
-          <InputText label="Contact Number" placeholder="Number" type="number" setter={setNumber}/>
-      </div>
-      <div className='flex flex-col text-gray-400 py-2'>
-          <InputText label="Email Address" placeholder="abc@gmail.com" type="email" setter={setEmail}/>
-      </div>
-      <div className='flex flex-col text-gray-400 py-2'>
-          <InputPassword password={password} setPassword={setPassword}/>
-      </div>
-      <div className='flex justify-between text-gray-400 py-2'>
-          <p className='flex items-center'><input className='mr-2' type="checkbox" /> Remember Me</p>
-      </div>
-      <Button label="Signup" onClick={onClick}/>
-      <div className='text-white'>Already have an account? <a href="/" className='text-blue-500 underline hover:text-blue-600'>Login</a></div>
-  </form>
+          <div className='relative transform transition-all duration-300 hover:translate-x-1'>
+            <InputText 
+              label="Contact Number" 
+              placeholder="+1 (234) 567-8900" 
+              type="tel" 
+              setter={setNumber}
+            />
+          </div>
+
+          <div className='relative transform transition-all duration-300 hover:translate-x-1'>
+            <InputText 
+              label="Email Address" 
+              placeholder="you@example.com" 
+              type="email" 
+              setter={setEmail}
+            />
+          </div>
+          
+          <div className='relative transform transition-all duration-300 hover:translate-x-1'>
+            <InputPassword 
+              password={password} 
+              setPassword={setPassword}
+            />
+          </div>
+
+          <div className='flex items-center space-x-2 text-sm text-gray-300'>
+            <input type="checkbox" className='w-4 h-4 rounded border-gray-400 text-purple-500 focus:ring-purple-500 cursor-pointer'/>
+            <span className='group-hover:text-purple-400 transition-colors duration-200'>
+              I agree to the{' '}
+              <a href="#" className='text-purple-400 hover:text-purple-300 transition-colors duration-200'>Terms</a>
+              {' '}and{' '}
+              <a href="#" className='text-purple-400 hover:text-purple-300 transition-colors duration-200'>Privacy Policy</a>
+            </span>
+          </div>
+        </div>
+
+        <div className='mt-8 space-y-4'>
+          <Button label="Create Account" onClick={onClick}/>
+          
+          <p className='text-center text-gray-300'>
+            Already have an account?{' '}
+            <Link to="/" className='text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium'>
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </form>
+    </div>
   )
 }
