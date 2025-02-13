@@ -18,14 +18,14 @@ class CourseResponse(BaseModel):
 # Deadline schema for response
 class DeadlineResponse(BaseModel):
     id: int
-    subject: str
+    course_id: int
     assignment_no: int
     deadline: str
     status: str
+    course_title: str  # Add this field
 
     class Config:
-        from_attributes = True  # Enable ORM mode for SQLAlchemy models
-
+        orm_mode = True
 
 # Assign course schema for request
 class AssignCourseRequest(BaseModel):

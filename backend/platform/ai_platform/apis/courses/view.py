@@ -34,9 +34,32 @@ async def get_student_deadlines(
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
-    # Fetch deadlines for the student's assignments
-    deadlines = db.query(Deadline).join(Assignment).filter(Assignment.student_id == current_user.id).all()
-    return deadlines
+    # Fetch deadlines for the student's assignments with course name
+    deadlines = db.query(
+        Deadline.id,
+        Deadline.course_id,
+        Deadline.assignment_no,
+        Deadline.deadline,
+        Deadline.status,
+        Course.title.label("course_title")  # Include course title
+    ).select_from(Deadline).join(Assignment,
+                                 Deadline.assignment_id == Assignment.id).join(Course,
+    Assignment.course_id == Course.id).filter(Assignment.student_id == current_user.id).all()
+
+    # Convert the result to a list of dictionaries
+    result = [
+        {
+            "id": deadline.id,
+            "course_id": deadline.course_id,
+            "assignment_no": deadline.assignment_no,
+            "deadline": deadline.deadline,
+            "status": deadline.status,
+            "course_title": deadline.course_title  # Include course title in the response
+        }
+        for deadline in deadlines
+    ]
+
+    return result
 
 # Assign a course to a student (for TAs, instructors, and admins)
 @router.post("/ta/assign-course", response_model=AssignCourseResponse)

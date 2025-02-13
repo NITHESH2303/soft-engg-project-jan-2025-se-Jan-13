@@ -18,8 +18,8 @@ interface Course {
 
 interface Deadline {
   id: number;
-  subject: string;
-  assignmentNo: number;
+  course: string;
+  assignmnt_no: number;
   deadline: string;
   status: 'Pending' | 'Submitted';
 }
@@ -145,7 +145,7 @@ export default function Dashboard() {
                     Deadline
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Subject
+                    Course
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Assignment No.
@@ -162,10 +162,10 @@ export default function Dashboard() {
                       {deadline.deadline}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deadline.subject}
+                      {deadline.course_title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deadline.assignmentNo}
+                      {deadline.assignment_no}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

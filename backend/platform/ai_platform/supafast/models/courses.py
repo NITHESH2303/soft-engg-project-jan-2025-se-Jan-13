@@ -40,7 +40,7 @@ class Deadline(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=False)
-    subject = Column(String, nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     assignment_no = Column(Integer, nullable=False)
     deadline = Column(String, nullable=False)
     status = Column(String, nullable=False, default="Pending")

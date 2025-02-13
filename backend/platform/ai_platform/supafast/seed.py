@@ -39,9 +39,9 @@ for course in courses:
 
     deadline = Deadline(
         assignment_id=assignment.id,
-        subject="Python",
+        course_id=course.id,
         assignment_no=2,
-        deadline="08 February 2025",
+        deadline="20 February 2025",
         status="Pending"
     )
     db.add(deadline)
