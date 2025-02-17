@@ -59,7 +59,7 @@ export default function Dashboard() {
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
         <div className="flex flex-col items-center mb-8">
           <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+            src="/iitm_avatar.png"
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />

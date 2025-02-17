@@ -1,13 +1,13 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Table
 from sqlalchemy.orm import relationship
 
 from ai_platform.supafast.database import Base
+from ai_platform.supafast.models.users import student_completed_courses, student_pending_courses, \
+    student_current_term_courses
 
 
-# Course model
-# models.py
-# models.py
-# Course model
+# Association tables for many-to-many relationships
+
 class Course(Base):
     __tablename__ = "courses"
 
@@ -17,8 +17,14 @@ class Course(Base):
     icon = Column(String, nullable=False)
     description = Column(String, nullable=False)
 
-    # Relationship with assignments
+    # Relationships
+    students_completed = relationship("Student", secondary=student_completed_courses,
+                                      back_populates="completed_courses")
+    students_pending = relationship("Student", secondary=student_pending_courses, back_populates="pending_courses")
+    students_current_term = relationship("Student", secondary=student_current_term_courses,
+                                         back_populates="current_term_courses")
     assignments = relationship("Assignment", back_populates="course")
+
 
 # Assignment model
 # models.py
@@ -33,6 +39,8 @@ class Assignment(Base):
     student = relationship("User", back_populates="courses")
     course = relationship("Course", back_populates="assignments")
     deadlines = relationship("Deadline", back_populates="assignment")  # Add this line
+
+
 # Deadline model
 # models.py
 class Deadline(Base):

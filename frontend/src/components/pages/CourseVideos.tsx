@@ -10,115 +10,115 @@ import { pieChart } from 'react-icons-kit/feather/pieChart';
 import { Link, useParams } from 'react-router-dom';
 import Chat from './Chat';
 
-interface Course {
+interface Video {
   id: number;
   title: string;
-  description: string;
-  weeks: Week[];
+  duration: string;
+  video_link: string;
+}
+
+interface Assignment {
+  id: number;
+  assignment_content: any[];
+  is_coding_assignment: boolean;
+  deadline: string;
 }
 
 interface Week {
-  id: number;
-  title: string;
-  videos: {
-    id: number;
-    title: string;
-    duration: string;
-    completed: boolean;
-  }[];
-  assignment?: {
-    title: string;
-    dueDate: string;
-    status: 'pending' | 'submitted';
-  };
+  week_no: number;
+  term: string;
+  upload_date: string;
+  videos: Video[];
+  practice_assignments: Assignment[];
+  graded_assignments: Assignment[];
 }
 
-const courses: Course[] = [
-  {
-    id: 1,
-    title: "Business Data Management",
-    description: "Learn to manage and analyze business data effectively",
-    weeks: [
-      {
-        id: 1,
-        title: 'Introduction to Data Management',
-        videos: [
-          { id: 1, title: 'What is Data Management?', duration: '10:30', completed: true },
-          { id: 2, title: 'Types of Business Data', duration: '15:45', completed: false },
-          { id: 3, title: 'Data Collection Methods', duration: '12:20', completed: false }
-        ],
-        assignment: {
-          title: 'Week 1 Assignment',
-          dueDate: '2025-02-15',
-          status: 'pending'
-        }
-      },
-      // Add more weeks...
-    ]
-  },
-  {
-    id: 2,
-    title: "Business Analytics",
-    description: "Master the fundamentals of business analytics",
-    weeks: [
-      {
-        id: 1,
-        title: 'Introduction to Analytics',
-        videos: [
-          { id: 1, title: 'What is Business Analytics?', duration: '12:30', completed: true },
-          { id: 2, title: 'Analytics Tools Overview', duration: '18:45', completed: false },
-          { id: 3, title: 'Data Analysis Process', duration: '15:20', completed: false }
-        ],
-        assignment: {
-          title: 'Week 1 Assignment',
-          dueDate: '2025-02-15',
-          status: 'pending'
-        }
-      },
-      // Add more weeks...
-    ]
-  },
-  {
-    id: 3,
-    title: "Modern Application Development - I",
-    description: "Build modern web applications using React",
-    weeks: [
-      {
-        id: 1,
-        title: 'Getting Started with React',
-        videos: [
-          { id: 1, title: 'Introduction to React', duration: '15:30', completed: true },
-          { id: 2, title: 'Components and Props', duration: '20:45', completed: false },
-          { id: 3, title: 'State and Lifecycle', duration: '18:20', completed: false }
-        ],
-        assignment: {
-          title: 'Week 1 Assignment',
-          dueDate: '2025-02-15',
-          status: 'pending'
-        }
-      },
-      // Add more weeks...
-    ]
-  }
-];
+interface CourseContent {
+  course_id: number;
+  weeks: Week[];
+}
 
 export default function CourseVideos() {
   const { courseId } = useParams();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState<number | null>(1);
-  const [selectedVideo, setSelectedVideo] = useState<number | null>(1);
-  const [course, setCourse] = useState<Course | null>(null);
+  const [selectedContent, setSelectedContent] = useState<{ type: string; id: number } | null>(null);
+  const [courseContent, setCourseContent] = useState<CourseContent | null>(null);
 
   useEffect(() => {
-    const currentCourse = courses.find(c => c.id === Number(courseId));
-    if (currentCourse) {
-      setCourse(currentCourse);
-    }
+    const fetchCourseContent = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/student/courses/${courseId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch course content');
+        }
+        const data = await response.json();
+        setCourseContent(data);
+        if (data.weeks.length > 0 && data.weeks[0].videos.length > 0) {
+          setSelectedContent({ type: 'video', id: data.weeks[0].videos[0].id });
+        }
+      } catch (error) {
+        console.error('Error fetching course content:', error);
+      }
+    };
+
+    fetchCourseContent();
   }, [courseId]);
 
-  if (!course) {
-    return <div>Course not found</div>;
+  if (!courseContent) {
+    return <div>Loading course content...</div>;
   }
+
+  const renderContentPlayer = () => {
+    if (!selectedContent) return null;
+
+    const week = courseContent.weeks.find(w => 
+      w.videos.some(v => v.id === selectedContent.id) ||
+      w.practice_assignments.some(pa => pa.id === selectedContent.id) ||
+      w.graded_assignments.some(ga => ga.id === selectedContent.id)
+    );
+
+    if (!week) return null;
+
+    switch (selectedContent.type) {
+      case 'video':
+        const video = week.videos.find(v => v.id === selectedContent.id);
+        if (!video) return null;
+        return (
+          <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
+            <div className="aspect-w-16 aspect-h-9 bg-gray-900 rounded-lg mb-6">
+              <iframe 
+                src={video.video_link} 
+                className="w-full h-full" 
+                allowFullScreen
+              ></iframe>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">{video.title}</h2>
+            <p className="text-gray-600 mt-2">Duration: {video.duration}</p>
+          </div>
+        );
+      case 'practice':
+      case 'graded':
+        const assignment = selectedContent.type === 'practice' 
+          ? week.practice_assignments.find(pa => pa.id === selectedContent.id)
+          : week.graded_assignments.find(ga => ga.id === selectedContent.id);
+        if (!assignment) return null;
+        return (
+          <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {selectedContent.type === 'practice' ? 'Practice Assignment' : 'Graded Assignment'}
+            </h2>
+            <p className="text-gray-600 mt-2">Deadline: {assignment.deadline}</p>
+            <p className="text-gray-600">
+              {assignment.is_coding_assignment ? 'Coding Assignment' : 'Written Assignment'}
+            </p>
+            {/* Render assignment content here */}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -126,7 +126,7 @@ export default function CourseVideos() {
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
         <div className="flex flex-col items-center mb-8">
           <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+            src="/iitm_avatar.png"
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />
@@ -161,8 +161,8 @@ export default function CourseVideos() {
       <div className="ml-64 p-8">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">{course.title}</h1>
-            <p className="text-gray-600 mt-2">{course.description}</p>
+            <h1 className="text-3xl font-bold text-gray-800">Course Content</h1>
+            <p className="text-gray-600 mt-2">Course ID: {courseContent.course_id}</p>
           </div>
           <div className="flex items-center space-x-4">
             <Link
@@ -182,97 +182,81 @@ export default function CourseVideos() {
           </div>
         </header>
 
-        {/* Course Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Video Navigation */}
+          {/* Week Navigation */}
           <div className="lg:col-span-1 space-y-4">
-            {course.weeks.map((week) => (
+            {courseContent.weeks.map((week) => (
               <div 
-                key={week.id} 
+                key={week.week_no} 
                 className="bg-white rounded-xl shadow-md overflow-hidden animate-scale-in"
               >
                 <button
                   className="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
-                  onClick={() => setExpandedWeek(expandedWeek === week.id ? null : week.id)}
+                  onClick={() => setExpandedWeek(expandedWeek === week.week_no ? null : week.week_no)}
                 >
-                  <h3 className="text-lg font-semibold text-gray-800">{week.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Week {week.week_no}</h3>
                   <Icon 
-                    icon={expandedWeek === week.id ? chevronUp : chevronDown} 
+                    icon={expandedWeek === week.week_no ? chevronUp : chevronDown} 
                     size={20}
                     className="text-gray-500"
                   />
                 </button>
                 
-                {expandedWeek === week.id && (
+                {expandedWeek === week.week_no && (
                   <div className="px-6 pb-4 space-y-3">
                     {week.videos.map((video) => (
                       <button
                         key={video.id}
                         className={`w-full p-3 rounded-lg flex justify-between items-center transition-colors ${
-                          selectedVideo === video.id 
+                          selectedContent?.id === video.id && selectedContent?.type === 'video'
                             ? 'bg-purple-50 text-purple-600' 
                             : 'hover:bg-gray-50'
                         }`}
-                        onClick={() => setSelectedVideo(video.id)}
+                        onClick={() => setSelectedContent({ type: 'video', id: video.id })}
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-2 h-2 rounded-full ${video.completed ? 'bg-green-500' : 'bg-gray-300'}`} />
-                          <span className="text-sm font-medium">{video.title}</span>
-                        </div>
+                        <span className="text-sm font-medium">{video.title}</span>
                         <span className="text-sm text-gray-500">{video.duration}</span>
                       </button>
                     ))}
                     
-                    {week.assignment && (
-                      <Link
-                        to={`/course/${courseId}/assignment/${week.id}`}
-                        className="mt-4 p-4 bg-gray-50 rounded-lg block hover:bg-gray-100 transition-colors"
+                    {week.practice_assignments.map((pa) => (
+                      <button
+                        key={pa.id}
+                        className={`w-full p-3 rounded-lg flex justify-between items-center transition-colors ${
+                          selectedContent?.id === pa.id && selectedContent?.type === 'practice'
+                            ? 'bg-blue-50 text-blue-600' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedContent({ type: 'practice', id: pa.id })}
                       >
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-medium text-gray-800">{week.assignment.title}</h4>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            week.assignment.status === 'submitted' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {week.assignment.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">Due: {week.assignment.dueDate}</p>
-                      </Link>
-                    )}
+                        <span className="text-sm font-medium">Practice Assignment</span>
+                        <span className="text-sm text-gray-500">Due: {pa.deadline}</span>
+                      </button>
+                    ))}
+
+                    {week.graded_assignments.map((ga) => (
+                      <button
+                        key={ga.id}
+                        className={`w-full p-3 rounded-lg flex justify-between items-center transition-colors ${
+                          selectedContent?.id === ga.id && selectedContent?.type === 'graded'
+                            ? 'bg-green-50 text-green-600' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedContent({ type: 'graded', id: ga.id })}
+                      >
+                        <span className="text-sm font-medium">Graded Assignment</span>
+                        <span className="text-sm text-gray-500">Due: {ga.deadline}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Video Player */}
+          {/* Content Player */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
-              <div className="aspect-w-16 aspect-h-9 bg-gray-900 rounded-lg mb-6">
-                {/* Video player placeholder */}
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-white text-opacity-50">Video Player</div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-gray-800">Introduction to Course</h2>
-                <p className="text-gray-600">
-                  Learn the fundamentals and get started with the course materials.
-                </p>
-                
-                <div className="flex items-center space-x-4">
-                  <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
-                    Mark as Complete
-                  </button>
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Download Resources
-                  </button>
-                </div>
-              </div>
-            </div>
+            {renderContentPlayer()}
           </div>
         </div>
       </div>
