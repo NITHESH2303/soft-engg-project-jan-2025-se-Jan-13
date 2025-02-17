@@ -8,6 +8,7 @@ import CourseVideos from './components/pages/CourseVideos'
 import CourseAssignment from './components/pages/CourseAssignment'
 import CourseAnalytics from './components/pages/CourseAnalytics'
 import Profile from './components/pages/Profile'
+import TADashboard from "./components/pages/TaDashboard";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/signup" Component={Signup} />
           <Route path="/chat" Component={Chat} />
           <Route path="/dashboard" Component={Dashboard} />
+          <Route path="/ta/dashboard" Component={TADashboard} />
           <Route path="/performance" Component={Performance} />
           <Route path="/course/:courseId" Component={CourseVideos} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
