@@ -7,7 +7,7 @@ import { messageCircle } from 'react-icons-kit/feather/messageCircle';
 import { x } from 'react-icons-kit/feather/x';
 import { Link, useNavigate } from 'react-router-dom';
 import Chat from './Chat';
-import { fetchCourses, fetchPendingAssignments, addCourseContent, updateAssignmentStatus } from '../../services/instructor.ts';
+import { fetchCourses, fetchPendingAssignments, updateAssignmentStatus } from '../../services/instructor.ts';
 
 interface Course {
   id: number;
@@ -25,19 +25,28 @@ interface PendingAssignment {
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
-interface CourseContent {
-  title: string;
-  videoUrl: string;
-  description: string;
-}
-
 export default function InstructorDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [pendingAssignments, setPendingAssignments] = useState<PendingAssignment[]>([]);
-  const [isAddingContent, setIsAddingContent] = useState(false);
-  const [newContent, setNewContent] = useState<CourseContent>({ title: '', videoUrl: '', description: '' });
   const navigate = useNavigate();
+
+  const assignedCourses = [
+    {
+      id: 1,
+      title: "English-I",
+      category: "Language",
+      icon: "🇬🇧",
+      description: "Introductory English course covering grammar and composition."
+    },
+    {
+      id: 2,
+      title: "Programming with Python",
+      category: "Computer Science",
+      icon: "🐍",
+      description: "Learn the basics of programming using Python language."
+    }
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,22 +62,6 @@ export default function InstructorDashboard() {
 
     fetchData();
   }, [navigate]);
-
-  const handleAddContent = () => {
-    setIsAddingContent(true);
-  };
-
-  const handleSubmitContent = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      await addCourseContent(newContent);
-      setIsAddingContent(false);
-      setNewContent({ title: '', videoUrl: '', description: '' });
-      // Optionally, refresh the course content here
-    } catch (error) {
-      console.error('Error adding course content:', error);
-    }
-  };
 
   const handleAssignmentAction = async (assignmentId: number, action: 'approve' | 'reject') => {
     try {
@@ -130,12 +123,6 @@ export default function InstructorDashboard() {
           <h1 className="text-3xl font-bold text-gray-800">Instructor Dashboard</h1>
           <div className="flex items-center space-x-4">
             <button 
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              onClick={handleAddContent}
-            >
-              Add Course Content
-            </button>
-            <button 
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setIsChatOpen(true)}
             >
@@ -144,12 +131,11 @@ export default function InstructorDashboard() {
           </div>
         </header>
 
-
-        {/* Courses Section */}
+        {/* Assigned Courses Section */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">My Courses</h2>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Assigned Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
+            {assignedCourses.map((course) => (
               <Link 
                 to={`/course/${course.id}`}
                 key={course.id} 
@@ -242,44 +228,6 @@ export default function InstructorDashboard() {
           </div>
         </section>
       </div>
-
-      {/* Add Content Modal */}
-      {isAddingContent && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Course Content</h3>
-            <form onSubmit={handleSubmitContent}>
-              <input
-                type="text"
-                placeholder="Content Title"
-                value={newContent.title}
-                onChange={(e) => setNewContent({ ...newContent, title: e.target.value })}
-                className="w-full p-2 mb-2 border rounded"
-              />
-              <input
-                type="url"
-                placeholder="Video URL"
-                value={newContent.videoUrl}
-                onChange={(e) => setNewContent({ ...newContent, videoUrl: e.target.value })}
-                className="w-full p-2 mb-2 border rounded"
-              />
-              <textarea
-                placeholder="Content Description"
-                value={newContent.description}
-                onChange={(e) => setNewContent({ ...newContent, description: e.target.value })}
-                className="w-full p-2 mb-2 border rounded"
-                rows={3}
-              />
-              <button type="submit" className="mt-4 w-full bg-blue-500 text-white rounded-md px-4 py-2">
-                Add Content
-              </button>
-            </form>
-            <button onClick={() => setIsAddingContent(false)} className="mt-2 w-full bg-gray-300 text-gray-800 rounded-md px-4 py-2">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Chat Overlay */}
       {isChatOpen && (
