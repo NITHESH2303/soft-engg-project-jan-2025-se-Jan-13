@@ -8,7 +8,10 @@ import CourseVideos from './components/pages/CourseVideos'
 import CourseAssignment from './components/pages/CourseAssignment'
 import CourseAnalytics from './components/pages/CourseAnalytics'
 import Profile from './components/pages/Profile'
+import InstructorLogin from "./components/pages/InstructorLogin";
+import TALogin from "./components/pages/TaLogin";
 import TADashboard from "./components/pages/TaDashboard";
+import InstructorDashboard from "./components/pages/InstructorDashboard";
 
 function App() {
   return (
@@ -16,10 +19,13 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" Component={Login} />
+          <Route path="/instructor/login" Component={InstructorLogin} />
+          <Route path="/ta/login" Component={TALogin} />
           <Route path="/signup" Component={Signup} />
           <Route path="/chat" Component={Chat} />
           <Route path="/dashboard" Component={Dashboard} />
           <Route path="/ta/dashboard" Component={TADashboard} />
+          <Route path="/instructor/dashboard" Component={InstructorDashboard} />
           <Route path="/performance" Component={Performance} />
           <Route path="/course/:courseId" Component={CourseVideos} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
