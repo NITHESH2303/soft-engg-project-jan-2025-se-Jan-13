@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from ai_platform.schemas.auth import LoginRequest
 from ai_platform.supafast.database import get_db
@@ -44,8 +45,10 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 
 # Login endpoint
 @router.post("/login", response_model=Token)
-async def login(login_request: LoginRequest, db: Session = Depends(get_db)):
-    user = authenticate_user(db, login_request.username, login_request.password)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
+    user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

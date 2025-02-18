@@ -54,11 +54,11 @@ async def create_student_profile(
     return new_profile
 
 
-@router.post("/register-courses")
+@router.post("/register-courses", response_model=List[CourseResponse]) # Updated response_model
 async def register_courses(
-        request: CourseRegistrationRequest,
-        current_user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
+    request: CourseRegistrationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if current_user.role not in ["student", "admin"]:
         raise HTTPException(status_code=403, detail="Only students and admins can register for courses")
@@ -71,11 +71,11 @@ async def register_courses(
     if len(courses) != len(request.course_ids):
         raise HTTPException(status_code=400, detail="One or more course IDs are invalid")
 
-    # Update current term courses
-    student.current_term_course_ids = [course.id for course in courses]
+    # Update current term courses - Assign Course objects directly
+    student.current_courses = courses
 
     # Increment current_term if it's a new registration
-    if not student.current_term_course_ids:
+    if not student.current_courses:
         student.current_term += 1
 
     # Generate or update roll number if it doesn't exist
@@ -90,11 +90,11 @@ async def register_courses(
 
     try:
         db.commit()
+        # Convert Course objects to CourseResponse schema objects before returning
+        return [CourseResponse.model_validate(course) for course in courses]
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="An error occurred while registering courses")
-
-    return courses
 
 
 @router.get("/courses", response_model=List[CourseResponse])
@@ -109,7 +109,10 @@ async def get_student_courses(
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
-    courses = db.query(Course).filter(Course.id.in_(student.current_term_course_ids)).all()
+    # Corrected query to fetch courses based on IDs in current_courses relationship
+    course_ids = [course.id for course in student.current_courses]
+    courses = db.query(Course).filter(Course.id.in_(course_ids)).all()
+
     return courses
 
 

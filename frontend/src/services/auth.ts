@@ -5,10 +5,16 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api/auth';
 // Login function
 export const login = async (username: string, password: string) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/login`, {
-      username,
-      password,
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    const response = await axios.post(`${API_BASE_URL}/login`, formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
+
     return response.data;
   } catch (error) {
     throw new Error('Login failed. Please check your credentials.');
