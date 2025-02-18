@@ -12,6 +12,8 @@ import InstructorLogin from "./components/pages/InstructorLogin";
 import TALogin from "./components/pages/TaLogin";
 import TADashboard from "./components/pages/TaDashboard";
 import InstructorDashboard from "./components/pages/InstructorDashboard";
+import CustomizeAI from "./components/pages/CustomizeAI";
+import AddContent from "./components/AiAgent/AddContent";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
           <Route path="/dashboard" Component={Dashboard} />
           <Route path="/ta/dashboard" Component={TADashboard} />
           <Route path="/instructor/dashboard" Component={InstructorDashboard} />
+          <Route path="/admin/customize-ai" Component={CustomizeAI} />
+          <Route path="/admin/add-content" Component={AddContent} />
           <Route path="/performance" Component={Performance} />
           <Route path="/course/:courseId" Component={CourseVideos} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />

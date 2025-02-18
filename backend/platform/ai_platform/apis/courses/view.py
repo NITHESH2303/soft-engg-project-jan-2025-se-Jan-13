@@ -102,8 +102,8 @@ async def get_student_courses(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    if current_user.role != "student":
-        raise HTTPException(status_code=403, detail="Only students can access this endpoint")
+    # if current_user.role != "student":
+    #     raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
     student = db.query(Student).filter(Student.id == current_user.id).first()
     if not student:
