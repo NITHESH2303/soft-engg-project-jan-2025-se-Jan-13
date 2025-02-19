@@ -31,6 +31,7 @@ class User(Base):
     # Relationship with assignments
     courses = relationship("Assignment", back_populates="student")
     student_profile = relationship("Student", back_populates="user", uselist=False)
+    conversations = relationship("Conversation", back_populates="user")
 
 
 class Student(Base):
