@@ -66,7 +66,7 @@ export default function CourseAnalytics() {
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
         <div className="flex flex-col items-center mb-8 animate-fade-in">
           <img
-            src="iitm_avatar.png"
+            src="/iitm_avatar.png"
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />
@@ -133,7 +133,7 @@ export default function CourseAnalytics() {
             <Line data={progressData} options={{ responsive: true }} />
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '300ms' }}>
+          <div className="bg-white rounded-md shadow-md" style={{ animationDelay: '300ms' }}>
             <h2 className="text-xl font-semibold mb-4">Course Completion</h2>
             <Doughnut data={completionData} options={{ responsive: true }} />
           </div>

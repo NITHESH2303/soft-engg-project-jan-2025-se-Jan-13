@@ -38,7 +38,7 @@ interface CourseContent {
   weeks: Week[];
 }
 
-export default function CourseVideos() {
+export default function WeeklyCourseContent() {
   const { courseId } = useParams();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [expandedWeek, setExpandedWeek] = useState<number | null>(1);
