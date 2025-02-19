@@ -7,6 +7,8 @@ from sqlalchemy.orm import relationship
 from ai_platform.supafast.database import Base
 import string
 
+from ai_platform.supafast.models.courses import student_completed_courses, student_current_courses,student_pending_courses
+
 
 class Role:
     STUDENT = "student"
@@ -29,22 +31,7 @@ class User(Base):
     # Relationship with assignments
     courses = relationship("Assignment", back_populates="student")
     student_profile = relationship("Student", back_populates="user", uselist=False)
-
-
-student_completed_courses = Table('student_completed_courses', Base.metadata,
-                                  Column('student_id', Integer, ForeignKey('students.id')),
-                                  Column('course_id', Integer, ForeignKey('courses.id'))
-                                  )
-
-student_pending_courses = Table('student_pending_courses', Base.metadata,
-                                Column('student_id', Integer, ForeignKey('students.id')),
-                                Column('course_id', Integer, ForeignKey('courses.id'))
-                                )
-
-student_current_term_courses = Table('student_current_term_courses', Base.metadata,
-                                     Column('student_id', Integer, ForeignKey('students.id')),
-                                     Column('course_id', Integer, ForeignKey('courses.id'))
-                                     )
+    conversations = relationship("Conversation", back_populates="user")
 
 
 class Student(Base):
@@ -58,19 +45,16 @@ class Student(Base):
     email_id = Column(String, unique=True, nullable=False)
     current_term = Column(Integer, default=1)
 
-    # Relationships
-    completed_courses = relationship("Course", secondary=student_completed_courses, back_populates="students_completed")
-    pending_courses = relationship("Course", secondary=student_pending_courses, back_populates="students_pending")
-    current_term_courses = relationship("Course", secondary=student_current_term_courses,
-                                        back_populates="students_current_term")
-
     # Relationship with User
     user = relationship("User", back_populates="student_profile")
+
+    # Relationships with Courses (many-to-many)
+    completed_courses = relationship("Course", secondary=student_completed_courses, back_populates="students_completed")
+    pending_courses = relationship("Course", secondary=student_pending_courses, back_populates="students_pending")
+    current_courses = relationship("Course", secondary=student_current_courses, back_populates="students_current")
 
     @staticmethod
     def generate_roll_number(year, term):
         year_prefix = str(year)[-2:]
         random_suffix = ''.join(random.choices(string.digits, k=7))
         return f"{year_prefix}f{term}{random_suffix}"
-
-

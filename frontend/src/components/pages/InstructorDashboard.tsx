@@ -6,13 +6,11 @@ import { messageCircle } from 'react-icons-kit/feather/messageCircle';
 import { settings } from 'react-icons-kit/feather/settings';
 import { bell } from 'react-icons-kit/feather/bell';
 import { x } from 'react-icons-kit/feather/x';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Chat from './Chat';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { fetchCourses } from '../../services/students';
-import CourseCard from '../ui/CourseCard';
-import Sidebar from '../ui/Sidebar';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -23,39 +21,19 @@ interface Course {
   icon: string;
   description: string;
 }
-interface Course {
-  id: number;
-  title: string;
-  category: string;
-  icon: string;
-  description: string;
-}
 
 export default function InstructorDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([{
-    id: 1,
-    title: "English-I",
-    category: "Language",
-    icon: "🇬🇧",
-    description: "Introductory English course covering grammar and composition."
-  },
-  {
-    id: 2,
-    title: "Programming with Python",
-    category: "Computer Science",
-    icon: "🐍",
-    description: "Learn the basics of programming using Python language."
-  }]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if the user is logged in
-    // const accessToken = localStorage.getItem('access_token');
-    // if (!accessToken) {
-    //   navigate('/login'); // Redirect to login if not logged in
-    //   return;
-    // }
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      navigate('/login'); // Redirect to login if not logged in
+      return;
+    }
 
     // Fetch courses from the backend
     const fetchData = async () => {
@@ -89,20 +67,57 @@ export default function InstructorDashboard() {
       backgroundColor: 'rgba(75, 192, 192, 0.6)',
     }]
   };
-  const sidebarItems = [
-    { icon: home, title: 'Home', href: '/dashboard' },
-    { icon: activity, title: 'Performance', href: '/performance' },
-    { icon: settings, title: 'Customize AI agents', href: '/admin/customize-ai' },
-    { icon: bell, title: 'Course Content Approval (2)', href: '/admin/content-approval' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Sidebar 
-        profileImage="/iitm_avatar.png"
-        profileTitle="Course Instructor"
-        items={sidebarItems}
-      />
+      {/* Sidebar */}
+      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
+        <div className="flex flex-col items-center mb-8">
+          <img
+            src="/iitm_avatar.png"
+            alt="Profile"
+            className="w-24 h-24 rounded-full mb-4"
+          />
+          <h2 className="text-xl font-bold">Course Instructor</h2>
+          <Link 
+            to="/profile" 
+            className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            View Profile
+          </Link>
+        </div>
+
+        <nav className="space-y-2">
+          <Link 
+            to="/dashboard" 
+            className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
+          >
+            <Icon icon={home} size={20} />
+            <span className="font-medium">Home</span>
+          </Link>
+          <Link 
+            to="/performance" 
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+          >
+            <Icon icon={activity} size={20} />
+            <span className="font-medium">Performance</span>
+          </Link>
+          <Link 
+            to="/admin/customize-ai" 
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+          >
+            <Icon icon={settings} size={20} />
+            <span className="font-medium">Customize AI agents</span>
+          </Link>
+          <Link 
+            to="/admin/content-approval" 
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+          >
+            <Icon icon={bell} size={20} />
+            <span className="font-medium">Course Content Approval (2)</span>
+          </Link>
+        </nav>
+      </div>
 
       {/* Main Content */}
       <div className="ml-64 p-8">
@@ -129,11 +144,29 @@ export default function InstructorDashboard() {
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">Assigned Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <Link 
+                to={`/manage-course/${course.id}`}
+                key={course.id} 
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <span className="inline-block px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full mb-4">
+                    {course.category}
+                  </span>
+                  <div className="text-4xl mb-4">{course.icon}</div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
+                  <p className="text-gray-600 mb-4">{course.description}</p>
+                  <span className="text-purple-600 hover:text-purple-700 font-medium inline-flex items-center">
+                    Manage Course
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
-
 
         {/* Charts Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">

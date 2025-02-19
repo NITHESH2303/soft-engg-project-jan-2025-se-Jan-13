@@ -2,11 +2,24 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, T
 from sqlalchemy.orm import relationship
 
 from ai_platform.supafast.database import Base
-from ai_platform.supafast.models.users import student_completed_courses, student_pending_courses, \
-    student_current_term_courses
 
 
-# Association tables for many-to-many relationships
+# Association tables for the different course relationships
+student_completed_courses = Table('student_completed_courses', Base.metadata,
+    Column('student_id', Integer, ForeignKey('students.id')),
+    Column('course_id', Integer, ForeignKey('courses.id'))
+)
+
+student_pending_courses = Table('student_pending_courses', Base.metadata,
+    Column('student_id', Integer, ForeignKey('students.id')),
+    Column('course_id', Integer, ForeignKey('courses.id'))
+)
+
+student_current_courses = Table('student_current_courses', Base.metadata,
+    Column('student_id', Integer, ForeignKey('students.id')),
+    Column('course_id', Integer, ForeignKey('courses.id'))
+)
+
 
 class Course(Base):
     __tablename__ = "courses"
@@ -17,14 +30,12 @@ class Course(Base):
     icon = Column(String, nullable=False)
     description = Column(String, nullable=False)
 
-    # Relationships
+    # Relationships with Students (many-to-many)
     students_completed = relationship("Student", secondary=student_completed_courses,
                                       back_populates="completed_courses")
     students_pending = relationship("Student", secondary=student_pending_courses, back_populates="pending_courses")
-    students_current_term = relationship("Student", secondary=student_current_term_courses,
-                                         back_populates="current_term_courses")
+    students_current = relationship("Student", secondary=student_current_courses, back_populates="current_courses")
     assignments = relationship("Assignment", back_populates="course")
-
 
 # Assignment model
 # models.py

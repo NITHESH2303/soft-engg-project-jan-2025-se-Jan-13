@@ -6,7 +6,7 @@ export default function InstructorLogin() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    navigate('/instructor-dashboard'); // Redirect to instructor dashboard after successful login
+    navigate('/instructor/dashboard'); // Redirect to instructor dashboard after successful login
   };
 
   return (
