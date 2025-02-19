@@ -7,6 +7,8 @@ import { x } from 'react-icons-kit/feather/x';
 import { Link, useNavigate } from 'react-router-dom';
 import Chat from './Chat';
 import { fetchCourses, fetchDeadlines } from '../../services/students';
+import Sidebar from '../ui/Sidebar';
+import DeadlineItem from '../ui/DeadlineItem';
 
 interface Course {
   id: number;
@@ -18,8 +20,8 @@ interface Course {
 
 interface Deadline {
   id: number;
-  course: string;
-  assignmnt_no: number;
+  course_title: string;
+  assignment_no: number;
   deadline: string;
   status: 'Pending' | 'Submitted';
 }
@@ -27,16 +29,80 @@ interface Deadline {
 export default function Dashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [deadlines, setDeadlines] = useState<Deadline[]>([
+    {
+      id: 1,
+      course_title: 'Business Data Management',
+      assignment_no: 1,
+      deadline: '2025-02-26',
+      status: 'Submitted'
+    },
+    {
+      id: 2,
+      course_title: 'Business Data Management',
+      assignment_no: 2,
+      deadline: '2025-03-05',
+      status: 'Pending'
+    },
+    {
+      id: 3,
+      course_title: 'Business Data Management',
+      assignment_no: 3,
+      deadline: '2025-03-12',
+      status: 'Submitted'
+    },
+    {
+      id: 4,
+      course_title: 'Business Analytics',
+      assignment_no: 1,
+      deadline: '2025-02-26',
+      status: 'Submitted'
+    },
+    {
+      id: 5,
+      course_title: 'Business Analytics',
+      assignment_no: 2,
+      deadline: '2025-03-05',
+      status: 'Pending'
+    },
+    {
+      id: 6,
+      course_title: 'Business Analytics',
+      assignment_no: 3,
+      deadline: '2025-03-12',
+      status: 'Submitted'
+    },
+    {
+      id: 7,
+      course_title: 'Modern Application Development - I',
+      assignment_no: 1,
+      deadline: '2025-02-26',
+      status: 'Submitted'
+    },
+    {
+      id: 8,
+      course_title: 'Modern Application Development - I',
+      assignment_no: 2,
+      deadline: '2025-03-05',
+      status: 'Pending'
+    },
+    {
+      id: 9,
+      course_title: 'Modern Application Development - I',
+      assignment_no: 3,
+      deadline: '2025-03-12',
+      status: 'Submitted'
+    }]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if the user is logged in
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-      navigate('/login'); // Redirect to login if not logged in
-      return;
-    }
+    // const accessToken = localStorage.getItem('access_token');
+    // if (!accessToken) {
+    //   navigate('/login'); // Redirect to login if not logged in
+    //   return;
+    // }
 
     // Fetch courses and deadlines from the backend
     const fetchData = async () => {
@@ -53,42 +119,18 @@ export default function Dashboard() {
     fetchData();
   }, [navigate]);
 
+  const sidebarItems = [
+    { icon: home, title: 'Home', href: '/dashboard' },
+    { icon: activity, title: 'Performance', href: '/performance' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
-        <div className="flex flex-col items-center mb-8">
-          <img
-            src="/iitm_avatar.png"
-            alt="Profile"
-            className="w-24 h-24 rounded-full mb-4"
-          />
-          <h2 className="text-xl font-bold">21f3001255</h2>
-          <Link 
-            to="/profile" 
-            className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-          >
-            View Profile
-          </Link>
-        </div>
-
-        <nav className="space-y-2">
-          <Link 
-            to="/dashboard" 
-            className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
-          >
-            <Icon icon={home} size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
-          <Link 
-            to="/performance" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={activity} size={20} />
-            <span className="font-medium">Performance</span>
-          </Link>
-        </nav>
-      </div>
+      <Sidebar
+        profileImage="/iitm_avatar.png"
+        profileTitle="21f3001255"
+        items={sidebarItems}
+      />
 
       {/* Main Content */}
       <div className="ml-64 p-8">
@@ -157,26 +199,13 @@ export default function Dashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {deadlines.map((deadline) => (
-                  <tr key={deadline.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deadline.deadline}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deadline.course_title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deadline.assignment_no}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        deadline.status === 'Submitted'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {deadline.status}
-                      </span>
-                    </td>
-                  </tr>
+                  <DeadlineItem
+                    key={deadline.id}
+                    course_title={deadline.course_title}
+                    assignment_no={deadline.assignment_no}
+                    deadline={deadline.deadline}
+                    status={deadline.status}
+                  />
                 ))}
               </tbody>
             </table>

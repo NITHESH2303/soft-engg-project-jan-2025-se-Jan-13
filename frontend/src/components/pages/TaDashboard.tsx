@@ -10,6 +10,8 @@ import { minus } from 'react-icons-kit/feather/minus';
 import { Link, useNavigate } from 'react-router-dom';
 import Chat from './Chat';
 import { fetchCourses, fetchAssignments } from '../../services/ta.ts';
+import Sidebar from '../ui/Sidebar';
+
 
 interface Course {
   id: number;
@@ -105,49 +107,20 @@ export default function TADashboard() {
     });
   };
 
+  const sidebarItems = [
+    { icon: home, title: 'Home', href: '/ta-dashboard' },
+    { icon: clipboard, title: 'Assignments', href: '/assignments' },
+    { icon: users, title: 'Students', href: '/students' },
+  ];
+
+
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
-        <div className="flex flex-col items-center mb-8">
-          <img
-            src="/ta_avatar.png"
-            alt="Profile"
-            className="w-24 h-24 rounded-full mb-4"
-          />
-          <h2 className="text-xl font-bold">TA Dashboard</h2>
-          <Link 
-            to="/profile" 
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            View Profile
-          </Link>
-        </div>
-
-        <nav className="space-y-2">
-          <Link 
-            to="/ta-dashboard" 
-            className="flex items-center space-x-3 p-3 rounded-lg bg-blue-50 text-blue-600"
-          >
-            <Icon icon={home} size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
-          <Link 
-            to="/assignments" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={clipboard} size={20} />
-            <span className="font-medium">Assignments</span>
-          </Link>
-          <Link 
-            to="/students" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={users} size={20} />
-            <span className="font-medium">Students</span>
-          </Link>
-        </nav>
-      </div>
+      <Sidebar
+        profileImage="/ta_avatar.png"
+        profileTitle="TA Dashboard"
+        items={sidebarItems}
+      />
 
       {/* Main Content */}
       <div className="ml-64 p-8">
