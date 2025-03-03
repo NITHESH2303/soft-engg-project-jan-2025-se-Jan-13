@@ -22,14 +22,15 @@ router = APIRouter()
 
 @router.get("/agents/", response_model=List[AiAgentInDB])
 def read_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Retrieve a list of AI agents.
+    """
+    **Retrieve a list of AI agents.**
     
-    Args:
+    **Args:**
         skip (int): Number of records to skip (pagination).
         limit (int): Maximum number of records to return.
         db (Session): Database session dependency.
     
-    Returns:
+    **Returns:**
         List[AiAgentInDB]: A list of AI agent records.
     """
     agents = crud.get_agents(db, skip=skip, limit=limit)
@@ -38,13 +39,14 @@ def read_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 @router.post("/agents/", response_model=AiAgentInDB)
 def create_agent(agent: AiAgentCreate, db: Session = Depends(get_db)):
-    """Create a new AI agent.
+    """
+    **Create a new AI agent.**
     
-    Args:
+    **Args:**
         agent (AiAgentCreate): The AI agent data to create.
         db (Session): Database session dependency.
     
-    Returns:
+    **Returns:**
         AiAgentInDB: The created AI agent.
     """
     return crud.create_agent(db=db, agent=agent)
@@ -53,17 +55,17 @@ def create_agent(agent: AiAgentCreate, db: Session = Depends(get_db)):
 @router.put("/agents/{agent_id}", response_model=AiAgentInDB)
 def update_agent(agent_id: int, agent: AiAgentUpdate, db: Session = Depends(get_db)):
     """
-    Update an existing AI agent.
+    **Update an existing AI agent.**
 
-    Args:
+    **Args:**
         agent_id (int): The ID of the agent to update.
         agent (AiAgentUpdate): The updated agent data.
         db (Session): Database session dependency.
 
-    Returns:
+    **Returns:**
         AiAgentInDB: The updated AI agent.
 
-    Raises:
+    **Raises:**
         HTTPException: If the agent is not found.
     """
     db_agent = crud.get_agent(db, agent_id=agent_id)
@@ -75,16 +77,16 @@ def update_agent(agent_id: int, agent: AiAgentUpdate, db: Session = Depends(get_
 @router.delete("/agents/{agent_id}", response_model=AiAgentInDB)
 def delete_agent(agent_id: int, db: Session = Depends(get_db)):
     """
-    Delete an AI agent.
+    **Delete an AI agent.**
 
-    Args:
+    **Args:**
         agent_id (int): The ID of the agent to delete.
         db (Session): Database session dependency.
 
-    Returns:
+    **Returns:**
         AiAgentInDB: The deleted AI agent.
 
-    Raises:
+    **Raises:**
         HTTPException: If the agent is not found.
     """
     db_agent = crud.get_agent(db, agent_id=agent_id)
@@ -101,12 +103,12 @@ class StreamingRequest(BaseModel):
 @router.post("/host_agent")
 async def host_agent(request: StreamingRequest):
     """
-    Host an AI agent conversation and stream responses.
+    **Host an AI agent conversation and stream responses.**
 
-    Args:
+    **Args:**
         request (StreamingRequest): The request containing the user's message and interaction history.
 
-    Returns:
+    **Returns:**
         StreamingResponse: The AI agent's response as a streaming event.
     """
     message = request.message
@@ -125,12 +127,12 @@ async def host_agent(request: StreamingRequest):
 )
 async def openai_streaming(request):
     """
-    Stream data using OpenAI's streaming service.
+    **Stream data using OpenAI's streaming service.**
 
-    Args:
+    **Args:**
         request: The incoming request (not currently used).
 
-    Returns:
+    **Returns:**
         StreamingResponse: Sample streaming data as an event stream.
     """
     return StreamingResponse(
