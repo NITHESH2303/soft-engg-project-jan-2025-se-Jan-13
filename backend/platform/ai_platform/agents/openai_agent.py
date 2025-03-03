@@ -1,4 +1,6 @@
-from ai_platform.agents.prompts import INST_HOST_AGENT
+import json
+
+from ai_platform.agents.prompts import INST_HOST_AGENT, INST_PARSER_AGENT
 from ai_platform.agents.streaming_services import OpenAIStreaming
 from openai import OpenAI
 import os
@@ -30,7 +32,7 @@ class Agents(OpenAIStreaming):
 
     async def host_agent(self, user_query, context=None, history: List[Dict] = None, streaming=False):
         if context:
-            host_prompt = INST_HOST_AGENT + "Here is the context, Please respond from this context from the first priority\n"+context
+            host_prompt = INST_HOST_AGENT + "Here is the context, Please respond from this context from the first priority\n" + context
         else:
             host_prompt = INST_HOST_AGENT
         if streaming:
@@ -40,3 +42,17 @@ class Agents(OpenAIStreaming):
             return await super().streamNow(user_query, messages=messages)
         else:
             pass  # implement non-streaming responses
+
+    async def parser_agent(self, user_query, history: List[Dict] = None, streaming=False):
+        messages = [
+            {"role": "system", "content": INST_PARSER_AGENT},
+        ]
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_query})
+        completion = self.openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"}
+        )
+        return json.loads(completion.choices[0].message.content)
