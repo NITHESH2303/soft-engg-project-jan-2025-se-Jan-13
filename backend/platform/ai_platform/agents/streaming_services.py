@@ -10,7 +10,8 @@ from openai.types.chat import ChatCompletionChunk
 from openai._streaming import AsyncStream
 from typing import AsyncGenerator
 import tiktoken
-
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 class OpenAIStreaming:
     def __init__(self, GENERATION_TIMEOUT_SEC=60):

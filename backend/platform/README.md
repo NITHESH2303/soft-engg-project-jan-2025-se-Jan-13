@@ -18,3 +18,6 @@ It will also create the alembic.ini and env.py inside it to control the migratio
 Note: Do not exectute this command if migrations directory already created under
 backend/platform
 
+Run individual test cases using
+```poetry run pytest -s .\tests\unit\test_openai_agent.py::test_parcel_agent
+```
