@@ -25,7 +25,18 @@ router = APIRouter()
 
 
 def extract_text_from_file(file: UploadFile) -> str:
-    """Extracts text from a given uploaded file (PDF, DOCX, TXT)"""
+    """
+    **Extract text from an uploaded file (PDF, DOCX, TXT).**
+
+    **Args:**
+        file (UploadFile): The uploaded file object.
+
+    **Returns:**
+        str: Extracted text from the file.
+
+    **Raises:**
+        HTTPException: If the file type is unsupported or an error occurs during processing.
+    """
     try:
         if file.filename.endswith(".pdf"):
             with pdfplumber.open(BytesIO(file.file.read())) as pdf:
@@ -51,7 +62,24 @@ async def create_knowledge_base(
         content: Optional[str] = Form(None),
         file: Optional[UploadFile] = File(None)
 ):
-    """API to create the knowledge base with either raw text or an uploaded document"""
+    """
+    **Create a knowledge base using raw text or an uploaded document.**
+
+    This API allows users to provide either a text input or an uploaded document (PDF, DOCX, TXT) 
+    to create a knowledge base.
+
+    **Args:**
+        vector_index (str): The name of the vector database index.
+        content (Optional[str]): The raw text content to store in the knowledge base.
+        file (Optional[UploadFile]): A document file from which text will be extracted.
+
+    **Returns:**
+        CreateKnowledgeBaseResponse: A response containing the status, document count, and vector index.
+
+    **Raises:**
+        HTTPException: If neither 'content' nor 'file' is provided.
+        HTTPException: If an error occurs while processing the file or creating embeddings.
+    """
     if not content and not file:
         raise HTTPException(status_code=400, detail="Either 'content' or 'file' must be provided.")
 
