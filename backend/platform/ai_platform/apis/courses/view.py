@@ -169,18 +169,18 @@ async def get_course_content(
         db: Session = Depends(get_db)
 ):
     """
-    Retrieve the content for a specific course, including video lectures, 
-    practice assignments, and graded assignments for each week.
+    **Retrieve the content for a specific course, including video lectures, 
+    practice assignments, and graded assignments for each week.**
 
-    Args:
+    **Args:**
         course_id (int): The ID of the course for which content is being retrieved.
         db (Session): The database session dependency.
 
-    Returns:
+    **Returns:**
         CourseContentResponse: A structured response containing course ID 
         and weekly content details such as videos, assignments, and graded assessments.
 
-    Raises:
+    **Raises:**
         HTTPException 404: If no content is found for the given course ID.
     """
    
