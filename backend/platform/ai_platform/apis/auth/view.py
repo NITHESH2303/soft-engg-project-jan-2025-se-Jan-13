@@ -22,6 +22,21 @@ router = APIRouter()
 # Signup endpoint
 @router.post("/signup")
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
+    """
+    **Register a new user.**
+    
+    This endpoint allows a new user to sign up by providing a username, email, password, and role.
+
+    **Args:**
+        request (SignupRequest): The signup request containing user details.
+        db (Session): Database session dependency.
+
+    **Returns:**
+        dict: Success message confirming user creation.
+
+    **Raises:**
+        HTTPException: If the username is already registered.
+    """
     # Check if user already exists
     db_user = db.query(User).filter(User.username == request.username).first()
     if db_user:
@@ -48,6 +63,21 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
+    """
+    **Authenticate a user and issue a JWT access token.**
+    
+    This endpoint verifies the provided username and password. If valid, it returns an access token.
+
+    **Args:**
+        form_data (OAuth2PasswordRequestForm): Form data containing `username` and `password`.
+        db (Session): Database session dependency.
+
+    **Returns:**
+        Token: A dictionary containing the access token and token type.
+
+    **Raises:**
+        HTTPException: If the username or password is incorrect.
+    """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -64,22 +94,66 @@ async def login(
 # Protected endpoint for students
 @router.get("/student")
 async def student_dashboard(current_user: User = Depends(has_role(Role.STUDENT))):
+    """
+    **Access the student dashboard.**
+    
+    This is a protected endpoint accessible only to users with the **STUDENT** role.
+
+    **Args:**
+        current_user (User): The authenticated user with the required role.
+
+    **Returns:**
+        dict: Welcome message for students.
+    """
     return {"message": "Welcome to the student dashboard"}
 
 
 # Protected endpoint for TAs
 @router.get("/ta")
 async def ta_dashboard(current_user: User = Depends(has_role(Role.TA))):
+    """
+    **Access the TA dashboard.**
+    
+    This is a protected endpoint accessible only to users with the **TA** role.
+
+    **Args:**
+        current_user (User): The authenticated user with the required role.
+
+    **Returns:**
+        dict: Welcome message for TAs.
+    """
     return {"message": "Welcome to the TA dashboard"}
 
 
 # Protected endpoint for instructors
 @router.get("/instructor")
 async def instructor_dashboard(current_user: User = Depends(has_role(Role.INSTRUCTOR))):
+    """
+    **Access the instructor dashboard.**
+    
+    This is a protected endpoint accessible only to users with the **INSTRUCTOR** role.
+
+    **Args:**
+        current_user (User): The authenticated user with the required role.
+
+    **Returns:**
+        dict: Welcome message for instructors.
+    """
     return {"message": "Welcome to the instructor dashboard"}
 
 
 # Protected endpoint for admins
 @router.get("/admin")
 async def admin_dashboard(current_user: User = Depends(has_role(Role.ADMIN))):
+    """
+    **Access the admin dashboard.**
+    
+    This is a protected endpoint accessible only to users with the **ADMIN** role.
+
+    **Args:**
+        current_user (User): The authenticated user with the required role.
+
+    **Returns:**
+        dict: Welcome message for admins.
+    """
     return {"message": "Welcome to the admin dashboard"}
