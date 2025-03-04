@@ -1,0 +1,5 @@
+Course: Business Data Management
+
+This course covers database management systems, SQL, and data governance.
+
+Detailed Course Content Here...

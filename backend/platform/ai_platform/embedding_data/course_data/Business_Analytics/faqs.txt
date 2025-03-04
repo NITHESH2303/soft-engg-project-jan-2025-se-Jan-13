@@ -1,0 +1,8 @@
+Q1: What is covered in this course?
+A1: Learn data-driven decision-making, predictive modeling, and visualization.
+
+Q2: Who is the instructor?
+A2: Instructor details here...
+
+Q3: What are the prerequisites?
+A3: Prerequisites here...

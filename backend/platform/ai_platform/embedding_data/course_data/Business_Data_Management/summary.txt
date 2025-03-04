@@ -1,0 +1,1 @@
+Summary: This course covers database management systems, SQL, and data governance.
