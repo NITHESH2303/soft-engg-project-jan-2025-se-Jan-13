@@ -23,6 +23,22 @@ async def create_student_profile(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
+    """
+    **Create a student profile.**
+    
+    Allows a student to create their profile, generating a unique roll number.
+
+    **Args:**
+        profile (StudentProfileCreate): Student profile details.
+        current_user (User): The authenticated user.
+        db (Session): Database session.
+
+    **Returns:**
+        StudentProfileResponse: The created student profile.
+
+    **Raises:**
+        HTTPException: If the user is not a student or the profile already exists.
+    """
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can create a student profile")
 
@@ -60,6 +76,22 @@ async def register_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    **Register a student for courses.**
+    
+    Allows students and admins to register for multiple courses.
+
+    **Args:**
+        request (CourseRegistrationRequest): Course registration request containing course IDs.
+        current_user (User): The authenticated user.
+        db (Session): Database session.
+
+    **Returns:**
+        List[CourseResponse]: List of registered courses.
+
+    **Raises:**
+        HTTPException: If the user is not authorized, the student profile is missing, or course IDs are invalid.
+    """
     if current_user.role not in ["student", "admin"]:
         raise HTTPException(status_code=403, detail="Only students and admins can register for courses")
 
@@ -102,6 +134,21 @@ async def get_student_courses(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
+    """
+    **Retrieve courses registered by the student.**
+    
+    Fetches all courses in which the student is currently enrolled.
+
+    **Args:**
+        current_user (User): The authenticated student.
+        db (Session): Database session.
+
+    **Returns:**
+        List[CourseResponse]: List of registered courses.
+
+    **Raises:**
+        HTTPException: If the student profile is not found.
+    """
     # if current_user.role != "student":
     #     raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
@@ -121,6 +168,22 @@ async def get_course_content(
         course_id: int,
         db: Session = Depends(get_db)
 ):
+    """
+    **Retrieve the content for a specific course, including video lectures, 
+    practice assignments, and graded assignments for each week.**
+
+    **Args:**
+        course_id (int): The ID of the course for which content is being retrieved.
+        db (Session): The database session dependency.
+
+    **Returns:**
+        CourseContentResponse: A structured response containing course ID 
+        and weekly content details such as videos, assignments, and graded assessments.
+
+    **Raises:**
+        HTTPException 404: If no content is found for the given course ID.
+    """
+   
     # Fetch weekwise content for the course
     weeks = db.query(WeekwiseContent).filter(WeekwiseContent.course_id == course_id).all()
     if not weeks:
@@ -163,6 +226,22 @@ async def get_student_deadlines(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
+    """
+    **Fetch assignment deadlines for a student.**
+    
+    Retrieves upcoming assignment deadlines along with course details.
+
+    **Args:**
+        current_user (User): The authenticated student.
+        db (Session): Database session.
+
+    **Returns:**
+        List[DeadlineResponse]: List of assignment deadlines.
+
+    **Raises:**
+        HTTPException: If the user is not a student.
+    """
+    
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
@@ -202,6 +281,22 @@ async def assign_course(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
+    """
+    **Assign a course to a student (For TAs, instructors, and admins).**
+    
+    This endpoint allows authorized users to assign a course to a student.
+
+    **Args:**
+        request (AssignCourseRequest): Course assignment request containing student ID and course ID.
+        current_user (User): The authenticated user (TA, instructor, or admin).
+        db (Session): Database session.
+
+    **Returns:**
+        AssignCourseResponse: Confirmation message.
+
+    **Raises:**
+        HTTPException: If the user is unauthorized, student/course is not found, or course is already assigned.
+    """
     if current_user.role not in ["ta", "instructor", "admin"]:
         raise HTTPException(status_code=403, detail="Only TAs, instructors, and admins can assign courses")
 

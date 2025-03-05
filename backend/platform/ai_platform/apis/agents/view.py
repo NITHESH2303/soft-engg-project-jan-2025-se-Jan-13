@@ -25,7 +25,18 @@ router = APIRouter()
 
 
 def extract_text_from_file(file: UploadFile) -> str:
-    """Extracts text from a given uploaded file (PDF, DOCX, TXT)"""
+    """
+    **Extract text from an uploaded file (PDF, DOCX, TXT).**
+
+    **Args:**
+        file (UploadFile): The uploaded file object.
+
+    **Returns:**
+        str: Extracted text from the file.
+
+    **Raises:**
+        HTTPException: If the file type is unsupported or an error occurs during processing.
+    """
     try:
         if file.filename.endswith(".pdf"):
             with pdfplumber.open(BytesIO(file.file.read())) as pdf:
@@ -51,7 +62,24 @@ async def create_knowledge_base(
         content: Optional[str] = Form(None),
         file: Optional[UploadFile] = File(None)
 ):
-    """API to create the knowledge base with either raw text or an uploaded document"""
+    """
+    **Create a knowledge base using raw text or an uploaded document.**
+
+    This API allows users to provide either a text input or an uploaded document (PDF, DOCX, TXT) 
+    to create a knowledge base.
+
+    **Args:**
+        vector_index (str): The name of the vector database index.
+        content (Optional[str]): The raw text content to store in the knowledge base.
+        file (Optional[UploadFile]): A document file from which text will be extracted.
+
+    **Returns:**
+        CreateKnowledgeBaseResponse: A response containing the status, document count, and vector index.
+
+    **Raises:**
+        HTTPException: If neither 'content' nor 'file' is provided.
+        HTTPException: If an error occurs while processing the file or creating embeddings.
+    """
     if not content and not file:
         raise HTTPException(status_code=400, detail="Either 'content' or 'file' must be provided.")
 
@@ -76,17 +104,52 @@ async def create_knowledge_base(
 
 @router.get("/agents/", response_model=List[AiAgentInDB])
 def read_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    **Retrieve a list of AI agents.**
+    
+    **Args:**
+        skip (int): Number of records to skip (pagination).
+        limit (int): Maximum number of records to return.
+        db (Session): Database session dependency.
+    
+    **Returns:**
+        List[AiAgentInDB]: A list of AI agent records.
+    """
     agents = crud.get_agents(db, skip=skip, limit=limit)
     return agents
 
 
 @router.post("/agents/", response_model=AiAgentInDB)
 def create_agent(agent: AiAgentCreate, db: Session = Depends(get_db)):
+    """
+    **Create a new AI agent.**
+    
+    **Args:**
+        agent (AiAgentCreate): The AI agent data to create.
+        db (Session): Database session dependency.
+    
+    **Returns:**
+        AiAgentInDB: The created AI agent.
+    """
     return crud.create_agent(db=db, agent=agent)
 
 
 @router.put("/agents/{agent_id}", response_model=AiAgentInDB)
 def update_agent(agent_id: int, agent: AiAgentUpdate, db: Session = Depends(get_db)):
+    """
+    **Update an existing AI agent.**
+
+    **Args:**
+        agent_id (int): The ID of the agent to update.
+        agent (AiAgentUpdate): The updated agent data.
+        db (Session): Database session dependency.
+
+    **Returns:**
+        AiAgentInDB: The updated AI agent.
+
+    **Raises:**
+        HTTPException: If the agent is not found.
+    """
     db_agent = crud.get_agent(db, agent_id=agent_id)
     if db_agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
@@ -95,6 +158,19 @@ def update_agent(agent_id: int, agent: AiAgentUpdate, db: Session = Depends(get_
 
 @router.delete("/agents/{agent_id}", response_model=AiAgentInDB)
 def delete_agent(agent_id: int, db: Session = Depends(get_db)):
+    """
+    **Delete an AI agent.**
+
+    **Args:**
+        agent_id (int): The ID of the agent to delete.
+        db (Session): Database session dependency.
+
+    **Returns:**
+        AiAgentInDB: The deleted AI agent.
+
+    **Raises:**
+        HTTPException: If the agent is not found.
+    """
     db_agent = crud.get_agent(db, agent_id=agent_id)
     if db_agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
@@ -108,6 +184,15 @@ class StreamingRequest(BaseModel):
 
 @router.post("/host_agent")
 async def host_agent(request: StreamingRequest):
+    """
+    **Host an AI agent conversation and stream responses.**
+
+    **Args:**
+        request (StreamingRequest): The request containing the user's message and interaction history.
+
+    **Returns:**
+        StreamingResponse: The AI agent's response as a streaming event.
+    """
     message = request.message
     history = request.history
     #
@@ -128,6 +213,15 @@ async def host_agent(request: StreamingRequest):
     "/openai_streaming",
 )
 async def openai_streaming(request):
+    """
+    **Stream data using OpenAI's streaming service.**
+
+    **Args:**
+        request: The incoming request (not currently used).
+
+    **Returns:**
+        StreamingResponse: Sample streaming data as an event stream.
+    """
     return StreamingResponse(
         streamClient.stream_string("Sample Streaming Data"),
         media_type='text/event-stream')
