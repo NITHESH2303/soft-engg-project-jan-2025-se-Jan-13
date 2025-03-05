@@ -25,7 +25,12 @@ poetry install
 poetry run python -m ai_platform 
 ```
 
-Open browser and paste the url ```http://127.0.0.1:8000/api/docs``` , Now you try listed APIs
+Open browser and paste the url ```http://127.0.0.1:8000/api/docs``` ,
+
+Now on this page login by Clicking on Authorize Button using below credentials 
+username: pankaj
+password: pankaj123 
+you can try listed APIs.
 
 
 ## Welcome
