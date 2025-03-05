@@ -21,6 +21,7 @@ class WeekwiseContent(Base):
     videos = relationship("VideoLecture", back_populates="week_content")
     practice_assignments = relationship("PracticeAssignment", back_populates="week_content")
     graded_assignments = relationship("GradedAssignment", back_populates="week_content")
+    submissions = relationship("AssignmentSubmission", back_populates="week_content")  # Fixed to 'submissions'
 
 
 class VideoLecture(Base):
