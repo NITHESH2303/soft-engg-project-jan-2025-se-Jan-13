@@ -1,24 +1,32 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Table, Text, Enum
 from sqlalchemy.orm import relationship
 
 from ai_platform.supafast.database import Base
+from datetime import datetime
+
+from enum import Enum as PyEnum
+
+class AssignmentType(PyEnum):
+    GRADED = "graded"
+    PRACTICE = "practice"
+    CODING = "coding"
 
 
 # Association tables for the different course relationships
 student_completed_courses = Table('student_completed_courses', Base.metadata,
-    Column('student_id', Integer, ForeignKey('students.id')),
-    Column('course_id', Integer, ForeignKey('courses.id'))
-)
+                                  Column('student_id', Integer, ForeignKey('students.id')),
+                                  Column('course_id', Integer, ForeignKey('courses.id'))
+                                  )
 
 student_pending_courses = Table('student_pending_courses', Base.metadata,
-    Column('student_id', Integer, ForeignKey('students.id')),
-    Column('course_id', Integer, ForeignKey('courses.id'))
-)
+                                Column('student_id', Integer, ForeignKey('students.id')),
+                                Column('course_id', Integer, ForeignKey('courses.id'))
+                                )
 
 student_current_courses = Table('student_current_courses', Base.metadata,
-    Column('student_id', Integer, ForeignKey('students.id')),
-    Column('course_id', Integer, ForeignKey('courses.id'))
-)
+                                Column('student_id', Integer, ForeignKey('students.id')),
+                                Column('course_id', Integer, ForeignKey('courses.id'))
+                                )
 
 
 class Course(Base):
@@ -36,6 +44,7 @@ class Course(Base):
     students_pending = relationship("Student", secondary=student_pending_courses, back_populates="pending_courses")
     students_current = relationship("Student", secondary=student_current_courses, back_populates="current_courses")
     assignments = relationship("Assignment", back_populates="course")
+
 
 # Assignment model
 # models.py
@@ -66,3 +75,24 @@ class Deadline(Base):
 
     # Relationship with assignment
     assignment = relationship("Assignment", back_populates="deadlines")
+
+
+class AssignmentSubmission(Base):
+    __tablename__ = "assignment_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=True)  # Nullable course reference
+    week_id = Column(Integer, ForeignKey("weekwise_content.id"), nullable=True)  # Nullable week reference
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    assignment_type = Column(Enum(AssignmentType), nullable=False)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    submission_content = Column(Text, nullable=True)  # Store answers, links, or file references
+
+    score = Column(Integer, nullable=True)  # Null until graded
+    graded_at = Column(DateTime, nullable=True)
+
+    assignment = relationship("Assignment", back_populates="submissions")
+    student = relationship("Student", back_populates="submissions")
+    course = relationship("Course", back_populates="submissions")
+    week = relationship("WeekwiseContent", back_populates="submissions")
