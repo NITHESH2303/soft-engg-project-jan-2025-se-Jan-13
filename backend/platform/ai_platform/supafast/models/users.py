@@ -53,6 +53,8 @@ class Student(Base):
     pending_courses = relationship("Course", secondary=student_pending_courses, back_populates="students_pending")
     current_courses = relationship("Course", secondary=student_current_courses, back_populates="students_current")
 
+    # Relationship with Submitted Assignment
+    submissions = relationship("AssignmentSubmission", back_populates="student")
     @staticmethod
     def generate_roll_number(year, term):
         year_prefix = str(year)[-2:]
