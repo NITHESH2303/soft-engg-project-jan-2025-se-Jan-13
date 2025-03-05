@@ -22,15 +22,18 @@ This is the backend implementation for the SEEK Portal, an AI-powered academic g
 pip install poetry
 cd platform
 poetry install 
+paste a valid OPENAI_API_KEY in .env present in platform
 poetry run python -m ai_platform 
 ```
 
-Open browser and paste the url ```http://127.0.0.1:8000/api/docs``` ,
+Open browser and paste the url `http://127.0.0.1:8000/api/docs`
 
 Now on this page login by Clicking on Authorize Button using below credentials 
-username: pankaj
-password: pankaj123 
-you can try listed APIs.
+- Username: pankaj
+- Password: pankaj123 
+
+You can try listed APIs.
+```
 
 
 ## Welcome
@@ -45,7 +48,7 @@ Welcome To the Software Engineering PROJECT JAN Term 2025 of Team-13 Backend
 **Warning**: We are using a centralized cloud PostgreSQL database named Supabase which gets paused if there is no connection in 30 days. If you face any error in running APIs, it is likely due to a paused database. Once you mail us, we can reactivate the database, but normally you will get an active database.
 
 ### AI Integration and Credentials
-For the RAG (Retrieval Augmented Generation), we have used OpenAI. You don't have to set up any key as we are providing the OpenAI key and other credentials in the `.env` file. 
+For the RAG (Retrieval Augmented Generation), we have used OpenAI. You  have to set up any key as we are not providing the OpenAI key for security reasons. 
 
 **Note**: These credentials will be valid for only 3 months (until 1-05-2025) with limited credits. If you are using them after that, they will not work, and you'll need to get the necessary keys.
 
