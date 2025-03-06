@@ -22,7 +22,7 @@ This is the backend implementation for the SEEK Portal, an AI-powered academic g
 pip install poetry
 cd platform
 poetry install 
-paste a valid OPENAI_API_KEY in .env present in platform
+paste a valid OPENAI_API_KEY in .env present in platform/ai_platform
 poetry run python -m ai_platform 
 ```
 

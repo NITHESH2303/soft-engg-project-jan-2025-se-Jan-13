@@ -8,6 +8,7 @@ import { chevronUp } from 'react-icons-kit/feather/chevronUp';
 import { pieChart } from 'react-icons-kit/feather/pieChart';
 import { Link, useParams } from 'react-router-dom';
 import ChatOverlay from '../ui/ChatOverlay';
+import CourseAssignment from './CourseAssignment';
 
 interface Video {
   id: number;
@@ -259,6 +260,8 @@ const getTruncatedTranscript = (video, length = 150) => {
           : week.graded_assignments.find(ga => ga.id === selectedContent.id);
         if (!assignment) return null;
         return (
+          <>
+          
           <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
             <h2 className="text-2xl font-bold text-gray-800">
               {selectedContent.type === 'practice' ? 'Practice Assignment' : 'Graded Assignment'}
@@ -267,8 +270,9 @@ const getTruncatedTranscript = (video, length = 150) => {
             <p className="text-gray-600">
               {assignment.is_coding_assignment ? 'Coding Assignment' : 'Written Assignment'}
             </p>
-            {/* Render assignment content here */}
+            <CourseAssignment/>
           </div>
+          </>
         ); }
       default:
         return null;
