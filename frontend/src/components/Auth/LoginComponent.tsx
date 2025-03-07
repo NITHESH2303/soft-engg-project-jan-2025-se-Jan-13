@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { login } from '../../services/auth';
+import { loginActual } from '../../services/auth';
 
 interface LoginComponentProps {
   onLoginSuccess: () => void;
@@ -15,7 +15,7 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await login(username, password);
+      const response = await loginActual(username, password);
       
       // Save the token in local storage
       localStorage.setItem('access_token', response.access_token);
