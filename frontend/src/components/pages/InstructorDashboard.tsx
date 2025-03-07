@@ -10,7 +10,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Chat from './Chat';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
-import { fetchCourses } from '../../services/students';
+import { fetchCoursesAdmin } from '../../services/admin.ts';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -38,7 +38,7 @@ export default function InstructorDashboard() {
     // Fetch courses from the backend
     const fetchData = async () => {
       try {
-        const coursesData = await fetchCourses();
+        const coursesData = await fetchCoursesAdmin();
         setCourses(coursesData);
       } catch (error) {
         console.error('Error fetching data:', error);

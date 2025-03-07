@@ -30,3 +30,33 @@ class AssignmentGradeRequest(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+# schemas/course.py
+from pydantic import BaseModel
+from typing import Optional, List
+
+
+class CourseBase(BaseModel):
+    title: str
+    category: str
+    icon: str
+    description: str
+
+
+class CourseCreate(CourseBase):
+    pass
+
+
+class CourseUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+
+
+class CourseResponse(CourseBase):
+    id: int
+
+    class Config:
+        orm_mode = True
