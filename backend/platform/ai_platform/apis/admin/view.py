@@ -5,8 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
+from ai_platform.apis.admin.course_crud import update_course, get_courses, delete_course, get_course, create_course
 from ai_platform.apis.auth.auth import get_current_user
-from ai_platform.schemas.admin import AssignmentSubmissionResponse, AssignmentGradeRequest
+from ai_platform.schemas.admin import AssignmentSubmissionResponse, AssignmentGradeRequest, CourseResponse, \
+    CourseUpdate, CourseCreate
 from ai_platform.schemas.courses import AssignCourseResponse, AssignCourseRequest
 from ai_platform.supafast.database import get_db
 from ai_platform.supafast.models.courses import Course, Assignment, AssignmentSubmission
@@ -116,3 +118,72 @@ def grade_assignment(
     db.refresh(submission)
 
     return {"message": "Assignment graded successfully", "submission_id": submission.id}
+
+
+@router.post("/course/create", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
+def create_new_course(
+        course: CourseCreate,
+        db: Session = Depends(get_db)
+):
+    """
+    Create a new course.
+    """
+    db_course = create_course(db, course)
+    return db_course
+
+
+@router.get("/course/{course_id}", response_model=CourseResponse)
+def read_course(
+        course_id: int,
+        db: Session = Depends(get_db)
+):
+    """
+    Get a specific course by ID.
+    """
+    db_course = get_course(db, course_id)
+    if not db_course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return db_course
+
+
+@router.get("/courses", response_model=List[CourseResponse])
+def read_courses(
+        skip: int = 0,
+        limit: int = 100,
+        db: Session = Depends(get_db)
+):
+    """
+    Get a list of courses with pagination.
+    """
+    print(f"getting all courses")
+    courses = get_courses(db, skip=skip, limit=limit)
+    return courses
+
+
+@router.put("/course/{course_id}", response_model=CourseResponse)
+def update_existing_course(
+        course_id: int,
+        course_update: CourseUpdate,
+        db: Session = Depends(get_db)
+):
+    """
+    Update an existing course.
+    """
+    updated_course = update_course(db, course_id, course_update)
+    if not updated_course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return updated_course
+
+
+@router.delete("/course/{course_id}", status_code=status.HTTP_200_OK)
+def delete_existing_course(
+        course_id: int,
+        db: Session = Depends(get_db)
+):
+    """
+    Delete a course.
+    """
+    deleted_course = delete_course(db, course_id)
+    if not deleted_course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"message": "Course deleted successfully", "course_id": course_id}
