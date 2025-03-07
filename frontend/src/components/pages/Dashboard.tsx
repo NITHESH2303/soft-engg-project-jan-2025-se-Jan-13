@@ -97,11 +97,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Check if the user is logged in
-    // const accessToken = localStorage.getItem('access_token');
-    // if (!accessToken) {
-    //   navigate('/login'); // Redirect to login if not logged in
-    //   return;
-    // }
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      navigate('/login'); // Redirect to login if not logged in
+      return;
+    }
 
     // Fetch courses and deadlines from the backend
     const fetchData = async () => {
