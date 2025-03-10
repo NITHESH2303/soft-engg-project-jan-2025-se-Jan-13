@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from 'react-icons-kit';
 import { home } from 'react-icons-kit/feather/home';
 import { activity } from 'react-icons-kit/feather/activity';
@@ -10,18 +10,29 @@ import { mapPin } from 'react-icons-kit/feather/mapPin';
 import { calendar } from 'react-icons-kit/feather/calendar';
 import { Link } from 'react-router-dom';
 import ChatOverlay from '../ui/ChatOverlay';
+import { fetchCourses } from '../../services/students';
 
 interface Course {
   id: number;
   title: string;
-  progress: number;
-  status: 'completed' | 'in-progress' | 'pending';
-  grade?: string;
-  completionDate?: string;
+  category: string;
+  icon: string;
+  description: string;
 }
 
 export default function Profile() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [currentCourses, setCurrentCourses] = useState([])
+
+  useEffect(() => {
+    console.log('in effect')
+    const fetchData = async () => {
+      const current_courses = await fetchCourses()
+      setCurrentCourses(current_courses)
+    }
+
+    fetchData()
+  }, [])
 
   const studentInfo = {
     id: '21f3001255',
@@ -31,7 +42,7 @@ export default function Profile() {
     address: 'Chennai, Tamil Nadu',
     program: 'BS in Data Science',
     batch: '2021-2025',
-    semester: '5th Semester',
+    term: '5',
   };
 
   const completedCourses: Course[] = [
@@ -50,27 +61,6 @@ export default function Profile() {
       status: 'completed',
       grade: 'A+',
       completionDate: '2023-12-20'
-    }
-  ];
-
-  const currentCourses: Course[] = [
-    {
-      id: 3,
-      title: 'Business Data Management',
-      progress: 65,
-      status: 'in-progress'
-    },
-    {
-      id: 4,
-      title: 'Business Analytics',
-      progress: 45,
-      status: 'in-progress'
-    },
-    {
-      id: 5,
-      title: 'Modern Application Development - I',
-      progress: 75,
-      status: 'in-progress'
     }
   ];
 
@@ -172,8 +162,8 @@ export default function Profile() {
           {/* Academic Progress */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Semester</h3>
-              <p className="text-3xl font-bold text-purple-600">{studentInfo.semester}</p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Term</h3>
+              <p className="text-3xl font-bold text-purple-600">{studentInfo.term}</p>
             </div>
             <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '100ms' }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed Courses</h3>
@@ -197,14 +187,12 @@ export default function Profile() {
                     to={`/course/${course.id}`}
                     className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <h3 className="font-medium text-gray-800 mb-2">{course.title}</h3>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${course.progress}%` }}
-                      />
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">{course.icon}</span>
+                      <h3 className="font-medium text-gray-800">{course.title}</h3>
                     </div>
-                    <span className="text-sm text-gray-500 mt-1 block">{course.progress}% Complete</span>
+                    <p className="text-sm text-gray-600 mb-2">{course.description}</p>
+                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{course.category}</span>
                   </Link>
                 ))}
               </div>
