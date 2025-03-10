@@ -3,8 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ai_platform.apis.auth.auth import get_current_user
-from ai_platform.schemas.courses import CourseResponse, DeadlineResponse, \
-    CourseRegistrationRequest, StudentProfileCreate, StudentProfileResponse
+from ai_platform.schemas.courses import CourseResponse, DeadlineResponse, CourseRegistrationRequest
 from ai_platform.schemas.weekwise_content import CourseContentResponse, GradedAssignmentResponse, \
     PracticeAssignmentResponse, VideoLectureResponse, WeekContentResponse
 from ai_platform.supafast.database import get_db
@@ -17,64 +16,11 @@ from datetime import datetime
 router = APIRouter()
 
 
-@router.post("/student-profile", response_model=StudentProfileResponse)
-async def create_student_profile(
-        profile: StudentProfileCreate,
+@router.post("/register-courses", response_model=List[CourseResponse])  # Updated response_model
+async def register_courses(
+        request: CourseRegistrationRequest,
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
-):
-    """
-    **Create a student profile.**
-    
-    Allows a student to create their profile, generating a unique roll number.
-
-    **Args:**
-        profile (StudentProfileCreate): Student profile details.
-        current_user (User): The authenticated user.
-        db (Session): Database session.
-
-    **Returns:**
-        StudentProfileResponse: The created student profile.
-
-    **Raises:**
-        HTTPException: If the user is not a student or the profile already exists.
-    """
-    if current_user.role != "student":
-        raise HTTPException(status_code=403, detail="Only students can create a student profile")
-
-    existing_profile = db.query(Student).filter(Student.id == current_user.id).first()
-    if existing_profile:
-        raise HTTPException(status_code=400, detail="Student profile already exists")
-
-    current_year = datetime.now().year
-    roll_number = Student.generate_roll_number(current_year, 1)  # Start with term 1
-
-    new_profile = Student(
-        id=current_user.id,
-        first_name=profile.first_name,
-        middle_name=profile.middle_name,
-        last_name=profile.last_name,
-        email_id=profile.email_id,
-        roll_number=roll_number,
-        current_term=1
-    )
-
-    try:
-        db.add(new_profile)
-        db.commit()
-        db.refresh(new_profile)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="An error occurred while creating the student profile")
-
-    return new_profile
-
-
-@router.post("/register-courses", response_model=List[CourseResponse]) # Updated response_model
-async def register_courses(
-    request: CourseRegistrationRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
     """
     **Register a student for courses.**
@@ -183,7 +129,7 @@ async def get_course_content(
     **Raises:**
         HTTPException 404: If no content is found for the given course ID.
     """
-   
+
     # Fetch weekwise content for the course
     weeks = db.query(WeekwiseContent).filter(WeekwiseContent.course_id == course_id).all()
     if not weeks:
@@ -241,7 +187,7 @@ async def get_student_deadlines(
     **Raises:**
         HTTPException: If the user is not a student.
     """
-    
+
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
@@ -272,5 +218,3 @@ async def get_student_deadlines(
     ]
 
     return result
-
-

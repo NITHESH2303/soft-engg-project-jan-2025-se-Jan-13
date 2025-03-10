@@ -12,7 +12,7 @@ interface Course {
 const CourseCard: React.FC<{ course: Course }> = ({ course }) => {
   return (
     <Link 
-      to={`/manage-course/${course.id}`} 
+      to={`/admin/manage-course/${course.id}`} 
       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
     >
       <div className="p-6">

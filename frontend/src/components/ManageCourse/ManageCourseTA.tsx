@@ -1,116 +1,72 @@
-import { useState } from 'react';
-import { Icon } from 'react-icons-kit';
-import { plus } from 'react-icons-kit/feather/plus';
-import { minus } from 'react-icons-kit/feather/minus';
 import { useParams } from 'react-router-dom';
 import WeeklyCourseContent from '../pages/WeeklyCourseContent';
 import WeeklyContentUpload from '../Admin/WeeklyContentUploader/WeeklyContentUpload';
-
-interface VideoLecture {
-  course_id: number;
-  week_no: number;
-  title: string;
-  transcript: string;
-  duration: string;
-  video_link: string;
-}
-
-interface PracticeAssignment {
-  course_id: number;
-  week_no: number;
-  lecture_id: number | null;
-  assignment_content: { question: string; type: string }[];
-  is_coding_assignment: boolean;
-  deadline: string;
-}
-
-interface GradedAssignment {
-  course_id: number;
-  week_no: number;
-  assignment_content: { question: string; type: string }[];
-  is_coding_assignment: boolean;
-  deadline: string;
-}
-
-interface WeekwiseContent {
-  week_no: number;
-  term: string;
-  course_id: number;
-  upload_date: string;
-}
+import { useState, useEffect } from 'react';
 
 export default function ManageCourse() {
   const { courseId } = useParams<{ courseId: string }>();
-  const [weekwiseContent, setWeekwiseContent] = useState<WeekwiseContent>({
-    week_no: 1,
-    term: 'Spring 2025',
-    course_id: parseInt(courseId || '0'),
-    upload_date: new Date().toISOString().split('T')[0],
-  });
-  const [videoLectures, setVideoLectures] = useState<VideoLecture[]>([]);
-  const [practiceAssignments, setPracticeAssignments] = useState<PracticeAssignment[]>([]);
-  const [gradedAssignments, setGradedAssignments] = useState<GradedAssignment[]>([]);
+  const [availableWeeks, setAvailableWeeks] = useState<number[]>([]);
+  const [showContentUploader, setShowContentUploader] = useState<boolean>(false);
 
-  const handleAddVideoLecture = () => {
-    setVideoLectures([
-      ...videoLectures,
-      {
-        course_id: parseInt(courseId || '0'),
-        week_no: weekwiseContent.week_no,
-        title: '',
-        transcript: '',
-        duration: '',
-        video_link: '',
-      },
-    ]);
-  };
-
-  const handleAddPracticeAssignment = () => {
-    setPracticeAssignments([
-      ...practiceAssignments,
-      {
-        course_id: parseInt(courseId || '0'),
-        week_no: weekwiseContent.week_no,
-        lecture_id: null,
-        assignment_content: [],
-        is_coding_assignment: false,
-        deadline: '',
-      },
-    ]);
-  };
-
-  const handleAddGradedAssignment = () => {
-    setGradedAssignments([
-      ...gradedAssignments,
-      {
-        course_id: parseInt(courseId || '0'),
-        week_no: weekwiseContent.week_no,
-        assignment_content: [],
-        is_coding_assignment: false,
-        deadline: '',
-      },
-    ]);
-  };
-
-  const handleSubmit = () => {
-    const payload = {
-      weekwise_content: weekwiseContent,
-      video_lectures: videoLectures,
-      practice_assignment: practiceAssignments[0] || null,
-      graded_assignment: gradedAssignments[0] || null,
+  useEffect(() => {
+    // Fetch available weeks for the course
+    const fetchAvailableWeeks = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/admin/course-weeks/${courseId}`);
+        const data = await response.json();
+        setAvailableWeeks([1, 3]); // Using your test data
+      } catch (error) {
+        console.error('Error fetching available weeks:', error);
+        setAvailableWeeks([1, 3]); // Fallback test data
+      }
     };
 
-    console.log('Submission Payload:', JSON.stringify(payload, null, 2));
-  };
+    fetchAvailableWeeks();
+  }, [courseId]);
 
   return (
-    <>        {/* Display Weekly Content */}
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Weekly Content</h2>
-      <WeeklyCourseContent />
-      {/* Main Content */}
-      <div className="ml-64 p-8 flex-1">
-        <WeeklyContentUpload/>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Course Management</h1>
+        <button 
+          onClick={() => setShowContentUploader(!showContentUploader)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          {showContentUploader ? 'View Course Content' : 'Add New Content'}
+        </button>
       </div>
-    </>
+
+      {showContentUploader ? (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Upload New Content</h2>
+          <WeeklyContentUpload courseId={Number(courseId)} onComplete={() => setShowContentUploader(false)} />
+        </div>
+      ) : (
+        <>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Weekly Content</h2>
+          {availableWeeks.length > 0 ? (
+            <div className="space-y-6">
+              {availableWeeks.map((weekNo) => (
+                <WeeklyCourseContent 
+                  key={weekNo} 
+                  courseId={Number(courseId)} 
+                  weekNo={weekNo} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+              <p className="text-gray-600 mb-4">No content has been added to this course yet.</p>
+              <button
+                onClick={() => setShowContentUploader(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Add First Content
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
