@@ -41,7 +41,7 @@ class GradedAssignmentResponse(BaseModel):
 class WeekContentResponse(BaseModel):
     week_no: int
     term: str
-    upload_date: str
+    upload_date: datetime
     videos: List[VideoLectureResponse]
     practice_assignments: List[PracticeAssignmentResponse]
     graded_assignments: List[GradedAssignmentResponse]

@@ -28,71 +28,7 @@ interface Deadline {
 export default function StudentDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [deadlines, setDeadlines] = useState<Deadline[]>([
-    {
-      id: 1,
-      course_title: 'Business Data Management',
-      assignment_no: 1,
-      deadline: '2025-02-26',
-      status: 'Submitted'
-    },
-    {
-      id: 2,
-      course_title: 'Business Data Management',
-      assignment_no: 2,
-      deadline: '2025-03-05',
-      status: 'Pending'
-    },
-    {
-      id: 3,
-      course_title: 'Business Data Management',
-      assignment_no: 3,
-      deadline: '2025-03-12',
-      status: 'Submitted'
-    },
-    {
-      id: 4,
-      course_title: 'Business Analytics',
-      assignment_no: 1,
-      deadline: '2025-02-26',
-      status: 'Submitted'
-    },
-    {
-      id: 5,
-      course_title: 'Business Analytics',
-      assignment_no: 2,
-      deadline: '2025-03-05',
-      status: 'Pending'
-    },
-    {
-      id: 6,
-      course_title: 'Business Analytics',
-      assignment_no: 3,
-      deadline: '2025-03-12',
-      status: 'Submitted'
-    },
-    {
-      id: 7,
-      course_title: 'Modern Application Development - I',
-      assignment_no: 1,
-      deadline: '2025-02-26',
-      status: 'Submitted'
-    },
-    {
-      id: 8,
-      course_title: 'Modern Application Development - I',
-      assignment_no: 2,
-      deadline: '2025-03-05',
-      status: 'Pending'
-    },
-    {
-      id: 9,
-      course_title: 'Modern Application Development - I',
-      assignment_no: 3,
-      deadline: '2025-03-12',
-      status: 'Submitted'
-    }]);
-
+  const [deadlines, setDeadlines] = useState<Deadline[]>([])
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -108,6 +44,7 @@ export default function StudentDashboard() {
       try {
         const coursesData = await fetchCourses();
         const deadlinesData = await fetchDeadlines();
+        // const studentData = await fetchStudentData()
         setCourses(coursesData);
         setDeadlines(deadlinesData);
       } catch (error) {
