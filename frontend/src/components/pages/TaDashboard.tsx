@@ -65,14 +65,14 @@ export default function TADashboard() {
 
         <nav className="space-y-2">
           <Link 
-            to="/ta-dashboard" 
+            to="/ta/dashboard" 
             className="flex items-center space-x-3 p-3 rounded-lg bg-blue-50 text-blue-600"
           >
             <Icon icon={home} size={20} />
             <span className="font-medium">Home</span>
           </Link>
           <Link 
-            to="/assignments" 
+            to="ta/assignments" 
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={clipboard} size={20} />
