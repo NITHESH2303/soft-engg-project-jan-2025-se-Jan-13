@@ -19,9 +19,10 @@ def include_object(object, name, type_, reflected, compare_to):
     Custom object inclusion filter to exclude objects
     containing 'langchain' in their type
     """
-    if 'langchain' in name:
-        return False
-    return True
+    if name:
+        if 'langchain' in name:
+            return False
+        return True
 
 
 def run_migrations_offline() -> None:
