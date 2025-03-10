@@ -52,24 +52,24 @@ export default function WeeklyContentUpload() {
     console.log('Submission Payload:', JSON.stringify(payload, null, 2));
 
     // TODO: Implement actual API call
-    // try {
-    //   const response = await fetch('/api/upload_content', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(payload),
-    //   });
-    //   if (response.ok) {
-    //     alert('Content uploaded successfully!');
-    //     // Reset form or redirect
-    //   } else {
-    //     alert('Failed to upload content');
-    //   }
-    // } catch (error) {
-    //   console.error('Error uploading content:', error);
-    //   alert('Error uploading content');
-    // }
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/weekwise-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        alert('Content uploaded successfully!');
+        // Reset form or redirect
+      } else {
+        alert('Failed to upload content');
+      }
+    } catch (error) {
+      console.error('Error uploading content:', error);
+      alert('Error uploading content');
+    }
   };
 
   return (
