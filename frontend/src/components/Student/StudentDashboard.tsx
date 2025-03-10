@@ -5,9 +5,9 @@ import { activity } from 'react-icons-kit/feather/activity';
 import { messageCircle } from 'react-icons-kit/feather/messageCircle';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchCourses, fetchDeadlines } from '../../services/students';
-import Sidebar from '../ui/Sidebar';
 import DeadlineItem from '../ui/DeadlineItem';
 import ChatOverlay from '../ui/ChatOverlay';
+import Sidebar from './Sidebar';
 
 interface Course {
   id: number;
@@ -25,7 +25,7 @@ interface Deadline {
   status: 'Pending' | 'Submitted';
 }
 
-export default function Dashboard() {
+export default function StudentDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([
@@ -152,7 +152,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
               <Link 
-                to={`/course/${course.id}`}
+                to={`/student/course/${course.id}`}
                 key={course.id} 
                 className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               >
