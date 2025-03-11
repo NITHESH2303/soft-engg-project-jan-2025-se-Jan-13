@@ -6,7 +6,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    navigate('/dashboard'); // Redirect to dashboard after successful login
+    navigate('/student/dashboard'); // Redirect to dashboard after successful login
   };
 
   return (

@@ -27,6 +27,7 @@ function App() {
           {/* Student Routes */}
           <Route path="/student/dashboard" Component={StudentDashboard} />
           <Route path="/student/course/:courseId" Component={WeeklyCourseContent} />
+          <Route path="/student/profile" Component={Profile} />
 
           <Route path="/" Component={Login} />
           <Route path="/login" Component={Login} />
@@ -43,7 +44,6 @@ function App() {
           <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
           <Route path="/course/:courseId/analytics" Component={CourseAnalytics} />
-          <Route path="/profile" Component={Profile} />
         </Routes>
       </BrowserRouter>
     </>

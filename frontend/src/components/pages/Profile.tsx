@@ -1,159 +1,133 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from 'react-icons-kit';
 import { home } from 'react-icons-kit/feather/home';
 import { activity } from 'react-icons-kit/feather/activity';
 import { messageCircle } from 'react-icons-kit/feather/messageCircle';
-import { edit2 } from 'react-icons-kit/feather/edit2';
 import { mail } from 'react-icons-kit/feather/mail';
-import { phone } from 'react-icons-kit/feather/phone';
-import { mapPin } from 'react-icons-kit/feather/mapPin';
 import { calendar } from 'react-icons-kit/feather/calendar';
+import { user } from 'react-icons-kit/feather/user';
+import { book } from 'react-icons-kit/feather/book';
+import { checkCircle } from 'react-icons-kit/feather/checkCircle';
+import { clock } from 'react-icons-kit/feather/clock';
 import { Link } from 'react-router-dom';
 import ChatOverlay from '../ui/ChatOverlay';
-import { fetchCourses } from '../../services/students';
+import Sidebar from '../Student/Sidebar';
+import { fetchStudentData, fetchCourses } from '../../services/students';
 
 interface Course {
   id: number;
   title: string;
-  category: string;
   icon: string;
   description: string;
+  category: string;
 }
 
-export default function Profile() {
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [currentCourses, setCurrentCourses] = useState([])
+interface CompletedCourse {
+  id: number;
+  title: string;
+  grade: string;
+  completion_date: string;
+}
+
+interface PendingCourse {
+  id: number;
+  title: string;
+}
+
+interface StudentData {
+  id: number;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  email_id: string;
+  roll_number: string;
+  current_term: number;
+  completed_courses: CompletedCourse[];
+  pending_courses: PendingCourse[];
+}
+
+interface SidebarItem {
+  icon: any;
+  title: string;
+  href: string;
+}
+
+const Profile: React.FC = () => {
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [studentData, setStudentData] = useState<StudentData | null>(null);
+  const [currentCourses, setCurrentCourses] = useState<Course[]>([]);
 
   useEffect(() => {
-    console.log('in effect')
     const fetchData = async () => {
-      const current_courses = await fetchCourses()
-      setCurrentCourses(current_courses)
-    }
+      try {
+        const studentInfo = await fetchStudentData();
+        setStudentData(studentInfo);
 
-    fetchData()
-  }, [])
+        const courses = await fetchCourses();
+        setCurrentCourses(courses);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
 
-  const studentInfo = {
-    id: '21f3001255',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (234) 567-8900',
-    address: 'Chennai, Tamil Nadu',
-    program: 'BS in Data Science',
-    batch: '2021-2025',
-    term: '5',
-  };
+    fetchData();
+  }, []);
 
-  const completedCourses: Course[] = [
-    {
-      id: 1,
-      title: 'Introduction to Programming',
-      progress: 100,
-      status: 'completed',
-      grade: 'A',
-      completionDate: '2023-12-15'
-    },
-    {
-      id: 2,
-      title: 'Database Management',
-      progress: 100,
-      status: 'completed',
-      grade: 'A+',
-      completionDate: '2023-12-20'
-    }
-  ];
+  if (!studentData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
-  const pendingCourses: Course[] = [
-    {
-      id: 6,
-      title: 'Machine Learning',
-      progress: 0,
-      status: 'pending'
-    },
-    {
-      id: 7,
-      title: 'Deep Learning',
-      progress: 0,
-      status: 'pending'
-    }
+  const sidebarItems: SidebarItem[] = [
+    { icon: home, title: 'Home', href: '/dashboard' },
+    { icon: activity, title: 'Performance', href: '/performance' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
-        <div className="flex flex-col items-center mb-8 animate-fade-in">
-          <img
-            src="/iitm_avatar.png"
-            alt="Profile"
-            className="w-24 h-24 rounded-full mb-4"
-          />
-          <h2 className="text-xl font-bold">{studentInfo.id}</h2>
-          <span className="text-sm text-gray-500">{studentInfo.program}</span>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex">
+      <Sidebar
+        profileImage="/iitm_avatar.png"
+        profileTitle={studentData.roll_number}
+        items={sidebarItems}
+      />
 
-        <nav className="space-y-2">
-          <Link 
-            to="/dashboard" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={home} size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
-          <Link 
-            to="/performance" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={activity} size={20} />
-            <span className="font-medium">Performance</span>
-          </Link>
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="ml-64 p-8">
+      <div className="flex-1 ml-64 p-8">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 animate-fade-in">Student Profile</h1>
-          <div className="flex items-center space-x-4">
-            <button 
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              onClick={() => setIsChatOpen(true)}
-            >
-              <Icon icon={messageCircle} size={24} />
-            </button>
-          </div>
+          <button 
+            className="p-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-colors"
+            onClick={() => setIsChatOpen(true)}
+          >
+            <Icon icon={messageCircle} size={24} />
+          </button>
         </header>
 
         <div className="space-y-8">
           {/* Personal Information */}
-          <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in">
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Personal Information</h2>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <Icon icon={edit2} size={20} />
-              </button>
-            </div>
-            
+          <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 text-gray-600">
                   <Icon icon={mail} size={20} />
-                  <span>{studentInfo.email}</span>
+                  <span>{studentData.email_id}</span>
                 </div>
                 <div className="flex items-center space-x-3 text-gray-600">
-                  <Icon icon={phone} size={20} />
-                  <span>{studentInfo.phone}</span>
+                  <Icon icon={calendar} size={20} />
+                  <span>Term {studentData.current_term}</span>
+                </div>
+                <div className="flex items-center space-x-3 text-gray-600">
+                  <Icon icon={user} size={20} />
+                  <span>{`${studentData.first_name} ${studentData.middle_name} ${studentData.last_name}`}</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 text-gray-600">
-                  <Icon icon={mapPin} size={20} />
-                  <span>{studentInfo.address}</span>
-                </div>
-                <div className="flex items-center space-x-3 text-gray-600">
-                  <Icon icon={calendar} size={20} />
-                  <span>{studentInfo.batch}</span>
+                  <Icon icon={activity} size={20} />
+                  <span>Roll Number: {studentData.roll_number}</span>
                 </div>
               </div>
             </div>
@@ -161,15 +135,15 @@ export default function Profile() {
 
           {/* Academic Progress */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in">
+            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Term</h3>
-              <p className="text-3xl font-bold text-purple-600">{studentInfo.term}</p>
+              <p className="text-3xl font-bold text-purple-600">{studentData.current_term}</p>
             </div>
-            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '100ms' }}>
+            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow" style={{ animationDelay: '100ms' }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed Courses</h3>
-              <p className="text-3xl font-bold text-green-600">{completedCourses.length}</p>
+              <p className="text-3xl font-bold text-green-600">{studentData.completed_courses.length}</p>
             </div>
-            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '200ms' }}>
+            <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow" style={{ animationDelay: '200ms' }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Courses</h3>
               <p className="text-3xl font-bold text-blue-600">{currentCourses.length}</p>
             </div>
@@ -178,60 +152,82 @@ export default function Profile() {
           {/* Course Lists */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Current Courses */}
-            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '300ms' }}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Current Courses</h2>
+            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow" style={{ animationDelay: '300ms' }}>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Icon icon={book} size={24} className="mr-2 text-blue-500" />
+                Current Courses
+              </h2>
               <div className="space-y-4">
-                {currentCourses.map((course) => (
-                  <Link 
-                    key={course.id}
-                    to={`/course/${course.id}`}
-                    className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center mb-2">
-                      <span className="text-2xl mr-2">{course.icon}</span>
-                      <h3 className="font-medium text-gray-800">{course.title}</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{course.description}</p>
-                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{course.category}</span>
-                  </Link>
-                ))}
+                {currentCourses.length > 0 ? (
+                  currentCourses.map((course) => (
+                    <Link 
+                      key={course.id}
+                      to={`/course/${course.id}`}
+                      className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center mb-2">
+                        <span className="text-2xl mr-2">{course.icon}</span>
+                        <h3 className="font-medium text-gray-800">{course.title}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{course.description}</p>
+                      <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{course.category}</span>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">No current courses available.</p>
+                )}
               </div>
             </section>
 
             {/* Completed Courses */}
-            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '400ms' }}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Completed Courses</h2>
+            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow" style={{ animationDelay: '400ms' }}>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Icon icon={checkCircle} size={24} className="mr-2 text-green-500" />
+                Completed Courses
+              </h2>
               <div className="space-y-4">
-                {completedCourses.map((course) => (
-                  <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-800 mb-2">{course.title}</h3>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Grade: {course.grade}</span>
-                      <span className="text-gray-500">Completed: {course.completionDate}</span>
+                {studentData.completed_courses.length > 0 ? (
+                  studentData.completed_courses.map((course) => (
+                    <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-medium text-gray-800 mb-2">{course.title}</h3>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Grade: {course.grade}</span>
+                        <span className="text-gray-500">Completed on {course.completion_date}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p>No completed courses yet.</p>
+                )}
               </div>
             </section>
 
             {/* Pending Courses */}
-            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '500ms' }}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Pending Courses</h2>
+            <section className="bg-white rounded-xl shadow-md p-6 animate-scale-in hover:shadow-lg transition-shadow" style={{ animationDelay: '500ms' }}>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Icon icon={clock} size={24} className="mr-2 text-yellow-500" />
+                Pending Courses
+              </h2>
               <div className="space-y-4">
-                {pendingCourses.map((course) => (
-                  <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-800">{course.title}</h3>
-                    <span className="text-sm text-gray-500">Not Started</span>
-                  </div>
-                ))}
+                {studentData.pending_courses.length > 0 ? (
+                  studentData.pending_courses.map((course) => (
+                    <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
+                      <h3 className="font-medium text-gray-800">{course.title}</h3>
+                      <span className="text-sm text-yellow-600">Not Started</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">No pending courses.</p>
+                )}
               </div>
             </section>
           </div>
         </div>
       </div>
 
-      {/* Chat Overlay */}
       <ChatOverlay isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
-}
+};
+
+export default Profile;

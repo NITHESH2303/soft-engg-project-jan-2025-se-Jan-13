@@ -33,7 +33,7 @@ export const fetchDeadlines = async () => {
 //Fetch student data
 export const fetchStudentData = async () => {
   try {
-    const response = axios.get(`${API_BASE_URL}/profile`, {
+    const response = await axios.get(`${API_BASE_URL}/profile`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access_token')}`
       }
@@ -59,6 +59,11 @@ export const fetchCourseContent = async (courseId: string | undefined) => {
     throw new Error('Failed to fetch course content')
   }
 } 
+
+//Post request to update profile
+export const updateProfile = async () => {
+  return
+}
 // Dummy FetchDeadlines for milestone3 Submission
 // export const fetchDeadlines = async () => {
 //   try {
