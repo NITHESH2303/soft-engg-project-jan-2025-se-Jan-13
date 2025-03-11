@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional
 
+from ai_platform.app_enums import AssignmentType
+
 
 class StudentCourseAnalyticsResponse(BaseModel):
     course_id: int
@@ -34,3 +36,22 @@ class StudentProfileReadResponse(BaseModel):
     completed_courses: List[CourseProgress]
     pending_courses: List[CourseProgress]
     current_courses: List[CourseProgress]
+
+
+
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+
+
+# Define AssignmentType Enum
+
+
+# Schema for creating a submission
+class AssignmentSubmissionCreate(BaseModel):
+    assignment_id: int
+    course_id: Optional[int] = None
+    week_id: Optional[int] = None
+    student_id: int
+    assignment_type: AssignmentType
+    submission_content: Optional[str] = None  # Could be text, link, or file reference

@@ -1,20 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from 'react-icons-kit';
+import { home } from 'react-icons-kit/feather/home';
+import { activity } from 'react-icons-kit/feather/activity';
 
 interface SidebarItem {
   icon: any;
   title: string;
   href: string;
 }
-
-interface SidebarProps {
-  profileImage: string;
-  profileTitle: string;
-  items: SidebarItem[];
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ profileImage, profileTitle, items }) => {
+//         profileTitle={`${studentData?.first_name} ${studentData?.last_name}`}
+const Sidebar: React.FC = () => {
+    const sidebarItems: SidebarItem[] = [
+      { icon: home, title: 'Home', href: '/student/dashboard' },
+      { icon: activity, title: 'Performance', href: '/student/performance' },
+    ];
+  const profileImage="/iitm_avatar.png"
+  const profileTitle="Student Name"
   return (
     <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg p-6">
       <div className="flex flex-col items-center mb-8">
@@ -25,7 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ profileImage, profileTitle, items }) 
         />
         <h2 className="text-xl font-bold">{profileTitle}</h2>
         <Link 
-          to="/profile" 
+          to="/student/profile" 
           className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
         >
           View Profile
@@ -33,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ profileImage, profileTitle, items }) 
       </div>
 
       <nav className="space-y-2">
-        {items.map((item, index) => (
+        {sidebarItems.map((item, index) => (
           <Link 
             key={index}
             to={item.href} 

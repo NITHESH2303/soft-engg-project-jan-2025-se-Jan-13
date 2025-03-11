@@ -1,33 +1,53 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List, Optional
 from sqlalchemy import func
-from sqlalchemy.orm import Session
-
-from ai_platform.apis.auth.auth import get_current_user
-from ai_platform.app_enums import AssignmentType
 from ai_platform.schemas.courses import Student
-from ai_platform.schemas.student import StudentCourseAnalyticsResponse
-from ai_platform.supafast.database import get_db
+from ai_platform.schemas.student import StudentCourseAnalyticsResponse, AssignmentSubmissionCreate
 from ai_platform.supafast.models.courses import Assignment, AssignmentSubmission
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from ai_platform.apis.auth.auth import get_current_user
+from ai_platform.schemas.courses import CourseResponse
+from ai_platform.supafast.database import get_db
+from ai_platform.supafast.models.courses import Course
+from ai_platform.supafast.models.users import User, Student
+from datetime import datetime
+
 
 router = APIRouter()
 
-from pydantic import BaseModel, Field
-from typing import Optional, List
-from datetime import datetime
-from enum import Enum
 
+@router.get("/courses", response_model=List[CourseResponse])
+async def get_student_courses(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """
+    **Retrieve courses registered by the student.**
 
-# Define AssignmentType Enum
+    Fetches all courses in which the student is currently enrolled.
 
+    **Args:**
+        current_user (User): The authenticated student.
+        db (Session): Database session.
 
-# Schema for creating a submission
-class AssignmentSubmissionCreate(BaseModel):
-    assignment_id: int
-    course_id: Optional[int] = None
-    week_id: Optional[int] = None
-    student_id: int
-    assignment_type: AssignmentType
-    submission_content: Optional[str] = None  # Could be text, link, or file reference
+    **Returns:**
+        List[CourseResponse]: List of registered courses.
+
+    **Raises:**
+        HTTPException: If the student profile is not found.
+    """
+    # if current_user.role != "student":
+    #     raise HTTPException(status_code=403, detail="Only students can access this endpoint")
+
+    student = db.query(Student).filter(Student.id == current_user.id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    # Corrected query to fetch courses based on IDs in current_courses relationship
+    course_ids = [course.id for course in student.current_courses]
+    courses = db.query(Course).filter(Course.id.in_(course_ids)).all()
+
+    return courses
 
 
 @router.post("/assignment/submit", status_code=201)
@@ -66,10 +86,10 @@ def submit_assignment(
 
 @router.get("/analytics", response_model=List[StudentCourseAnalyticsResponse])
 def get_student_course_analytics(
-    course_id: Optional[int] = Query(None),
-    student_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+        course_id: Optional[int] = Query(None),
+        student_id: Optional[int] = Query(None),
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
     # Students can only view their own analytics
     if user.role == "student":

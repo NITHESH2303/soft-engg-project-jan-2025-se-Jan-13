@@ -32,6 +32,10 @@ function App() {
           <Route path="/student/profile" Component={Profile} />
           <Route path="/" Component={Login} />
           <Route path="/login" Component={Login} />
+          <Route path="/student/performance" Component={Performance} />
+
+
+
           <Route path="/instructor/login" Component={InstructorLogin} />
           <Route path="/ta/login" Component={TALogin} />
           <Route path="/signup" Component={Signup} />
@@ -41,7 +45,6 @@ function App() {
           <Route path="/admin/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/admin/customize-ai" Component={CustomizeAI} />
           <Route path="/admin/add-content" Component={AddContent} />
-          <Route path="/performance" Component={Performance} />
           <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
           <Route path="/course/:courseId/analytics" Component={CourseAnalytics} />
