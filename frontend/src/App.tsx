@@ -15,6 +15,7 @@ import ManageCourse from "./components/ManageCourse/ManageCourseTA";
 import StudentDashboard from "./components/Student/StudentDashboard";
 import Login from "./components/Student/Login";
 import StudentCoursePage from "./components/Student/StudentCoursePage";
+import WeeklyCourseContent from "./components/WeeklyCourseContent/WeeklyCourseContent";
 
 function App() {
   return (
