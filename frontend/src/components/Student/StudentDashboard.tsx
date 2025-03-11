@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Icon } from 'react-icons-kit';
-import { home } from 'react-icons-kit/feather/home';
-import { activity } from 'react-icons-kit/feather/activity';
 import { messageCircle } from 'react-icons-kit/feather/messageCircle';
-import { user } from 'react-icons-kit/feather/user';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchCourses, fetchDeadlines, fetchStudentData } from '../../services/students';
 import DeadlineItem from '../ui/DeadlineItem';
@@ -64,18 +61,10 @@ export default function StudentDashboard() {
     fetchData();
   }, [navigate]);
 
-  const sidebarItems = [
-    { icon: home, title: 'Home', href: '/dashboard' },
-    { icon: activity, title: 'Performance', href: '/performance' },
-    { icon: user, title: 'Profile', href: '/student/profile' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar
-        profileImage="/iitm_avatar.png"
-        profileTitle={`${studentData?.first_name} ${studentData?.last_name}`}
-        items={sidebarItems}
       />
 
       {/* Main Content */}

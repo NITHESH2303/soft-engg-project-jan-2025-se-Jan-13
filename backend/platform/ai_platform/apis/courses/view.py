@@ -75,40 +75,6 @@ async def register_courses(
         raise HTTPException(status_code=500, detail="An error occurred while registering courses")
 
 
-@router.get("/courses", response_model=List[CourseResponse])
-async def get_student_courses(
-        current_user: User = Depends(get_current_user),
-        db: Session = Depends(get_db)
-):
-    """
-    **Retrieve courses registered by the student.**
-    
-    Fetches all courses in which the student is currently enrolled.
-
-    **Args:**
-        current_user (User): The authenticated student.
-        db (Session): Database session.
-
-    **Returns:**
-        List[CourseResponse]: List of registered courses.
-
-    **Raises:**
-        HTTPException: If the student profile is not found.
-    """
-    # if current_user.role != "student":
-    #     raise HTTPException(status_code=403, detail="Only students can access this endpoint")
-
-    student = db.query(Student).filter(Student.id == current_user.id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student profile not found")
-
-    # Corrected query to fetch courses based on IDs in current_courses relationship
-    course_ids = [course.id for course in student.current_courses]
-    courses = db.query(Course).filter(Course.id.in_(course_ids)).all()
-
-    return courses
-
-
 @router.get("/courses/{course_id}", response_model=CourseContentResponse)
 async def get_course_content(
         course_id: int,

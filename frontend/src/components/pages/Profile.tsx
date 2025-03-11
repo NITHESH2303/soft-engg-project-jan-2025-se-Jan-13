@@ -46,11 +46,6 @@ interface StudentData {
   pending_courses: PendingCourse[];
 }
 
-interface SidebarItem {
-  icon: any;
-  title: string;
-  href: string;
-}
 
 const Profile: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
@@ -81,17 +76,11 @@ const Profile: React.FC = () => {
     );
   }
 
-  const sidebarItems: SidebarItem[] = [
-    { icon: home, title: 'Home', href: '/dashboard' },
-    { icon: activity, title: 'Performance', href: '/performance' },
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <Sidebar
-        profileImage="/iitm_avatar.png"
-        profileTitle={studentData.roll_number}
-        items={sidebarItems}
       />
 
       <div className="flex-1 ml-64 p-8">
