@@ -21,11 +21,20 @@ export default function VideoViewer({ video, onClose, isAdmin, onUpdate }: Video
     setIsEditing(false);
   };
 
-  // Validate YouTube URL and convert to embed format if needed
+  // Updated function to handle YouTube live stream URLs
   const getEmbedUrl = (url: string) => {
     try {
-      const videoId = url.split('v=')[1]?.split('&')[0] || url.split('youtu.be/')[1]?.split('?')[0];
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+      if (url.includes('youtube.com/live/')) {
+        const videoId = url.split('live/')[1]?.split('?')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+      } else if (url.includes('youtube.com/watch?v=')) {
+        const videoId = url.split('v=')[1]?.split('&')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+      } else if (url.includes('youtu.be/')) {
+        const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+      }
+      return url;
     } catch {
       return url;
     }
@@ -75,11 +84,10 @@ export default function VideoViewer({ video, onClose, isAdmin, onUpdate }: Video
           <iframe
             width="100%"
             height="100%"
-            src={isEditing ? getEmbedUrl(editedVideo.video_link) : getEmbedUrl(video.video_link)}
+            src={getEmbedUrl(isEditing ? editedVideo.video_link : video.video_link)}
             title={video.title}
             frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="w-full h-full"
           ></iframe>
