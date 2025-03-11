@@ -3,8 +3,9 @@ import { Icon } from 'react-icons-kit';
 import { home } from 'react-icons-kit/feather/home';
 import { activity } from 'react-icons-kit/feather/activity';
 import { messageCircle } from 'react-icons-kit/feather/messageCircle';
+import { user } from 'react-icons-kit/feather/user';
 import { Link, useNavigate } from 'react-router-dom';
-import { fetchCourses, fetchDeadlines } from '../../services/students';
+import { fetchCourses, fetchDeadlines, fetchStudentData } from '../../services/students';
 import DeadlineItem from '../ui/DeadlineItem';
 import ChatOverlay from '../ui/ChatOverlay';
 import Sidebar from './Sidebar';
@@ -25,10 +26,17 @@ interface Deadline {
   status: 'Pending' | 'Submitted';
 }
 
+interface StudentData {
+  id: string;
+  first_name: string | " ";
+  last_name: string | " "
+}
+
 export default function StudentDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [deadlines, setDeadlines] = useState<Deadline[]>([])
+  const [studentData, setStudentData] = useState<StudentData>()
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,9 +52,10 @@ export default function StudentDashboard() {
       try {
         const coursesData = await fetchCourses();
         const deadlinesData = await fetchDeadlines();
-        // const studentData = await fetchStudentData()
+        const studentData = await fetchStudentData()
         setCourses(coursesData);
         setDeadlines(deadlinesData);
+        setStudentData(studentData)
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -58,13 +67,14 @@ export default function StudentDashboard() {
   const sidebarItems = [
     { icon: home, title: 'Home', href: '/dashboard' },
     { icon: activity, title: 'Performance', href: '/performance' },
+    { icon: user, title: 'Profile', href: '/student/profile' },
   ];
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar
         profileImage="/iitm_avatar.png"
-        profileTitle="21f3001255"
+        profileTitle={`${studentData?.first_name} ${studentData?.last_name}`}
         items={sidebarItems}
       />
 
@@ -73,7 +83,7 @@ export default function StudentDashboard() {
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Student Dashboard</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-lg font-medium text-gray-600">21f3001255</span>
+            <span className="text-lg font-medium text-gray-600">{studentData?.first_name} {studentData?.last_name}</span>
             <button 
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setIsChatOpen(true)}
