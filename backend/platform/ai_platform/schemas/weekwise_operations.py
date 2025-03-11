@@ -43,7 +43,7 @@ class WeekwiseContentResponse(BaseModel):
     upload_date: datetime  # Change to datetime
     created_at: datetime
     modified_at: Optional[datetime] = None
-    videos: List[VideoLectureBase]
+    video_lectures: List[VideoLectureBase]
     practice_assignments: List[PracticeAssignmentBase]
     graded_assignments: List[GradedAssignmentBase]
 

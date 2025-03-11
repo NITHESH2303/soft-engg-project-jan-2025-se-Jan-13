@@ -29,7 +29,7 @@ def read_weekwise_content(course_id: int, content_id: int, db: Session = Depends
         upload_date=db_content.upload_date,
         created_at=db_content.created_at,
         modified_at=db_content.modified_at,
-        videos=[
+        video_lectures=[
             VideoLectureBase(
                 id=video.id,
                 title=video.title,

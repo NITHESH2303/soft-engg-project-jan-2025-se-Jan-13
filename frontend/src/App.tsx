@@ -1,5 +1,4 @@
 import { Route, BrowserRouter, Routes } from "react-router-dom";
-import Login from './components/pages/Login'
 import Signup from './components/pages/Signup'
 import Chat from './components/pages/Chat'
 import Performance from './components/pages/Performance'
@@ -13,8 +12,9 @@ import InstructorDashboard from "./components/pages/InstructorDashboard";
 import CustomizeAI from "./components/pages/CustomizeAI";
 import AddContent from "./components/AiAgent/AddContent";
 import ManageCourse from "./components/ManageCourse/ManageCourseTA";
-import WeeklyCourseContent from "./components/pages/WeeklyCourseContent";
 import StudentDashboard from "./components/Student/StudentDashboard";
+import Login from "./components/Student/Login";
+import StudentCoursePage from "./components/Student/StudentCoursePage";
 
 function App() {
   return (
@@ -26,9 +26,9 @@ function App() {
 
           {/* Student Routes */}
           <Route path="/student/dashboard" Component={StudentDashboard} />
+          <Route path="/student/course/:courseId" Component={StudentCoursePage} />
           <Route path="/student/course/:courseId" Component={WeeklyCourseContent} />
           <Route path="/student/profile" Component={Profile} />
-
           <Route path="/" Component={Login} />
           <Route path="/login" Component={Login} />
           <Route path="/instructor/login" Component={InstructorLogin} />
