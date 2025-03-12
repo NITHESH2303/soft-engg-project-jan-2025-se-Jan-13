@@ -1,54 +1,56 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { BookOpen, Calendar, Users, Clock, Award } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Home, Activity, BookOpen, Calendar, Users, Clock, Award, CheckCircle, MessageCircle } from 'lucide-react';
 import ErrorMessage from '../WeeklyCourseContent/ErrorMessage';
 import LoadingSpinner from '../WeeklyCourseContent/LoadingSpinner';
-import Sidebar from './Sidebar';
-import { home } from 'react-icons-kit/feather/home';
-import { activity } from 'react-icons-kit/feather/activity';
 import WeeklyCourseContent from '../WeeklyCourseContent/WeeklyCourseContent';
+import { fetchCourseContent } from '../../services/students';
+import ChatOverlay from '../ui/ChatOverlay';
 
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  instructor: string;
-  startDate: string;
-  endDate: string;
-  totalWeeks: number;
-  enrolledStudents: number;
-  courseImage: string;
-  progress: number;
+interface Week {
+  week_no: number;
+  term: string;
+  upload_date: string;
+  videos: any[];
+  practice_assignments: any[];
+  graded_assignments: any[];
+}
+
+interface CourseData {
+  course_id: number;
+  weeks: Week[];
 }
 
 export default function StudentCoursePage() {
   const { courseId } = useParams<{ courseId: string }>();
-  const [course, setCourse] = useState<Course | null>(null);
+  const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const sidebarItems = [
-    { icon: home, title: 'Home', href: '/dashboard' },
-    { icon: activity, title: 'Performance', href: '/performance' },
-  ];
-  
+  const [weekProgress, setWeekProgress] = useState<Record<number, number>>({});
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
+
   useEffect(() => {
-    const fetchCourseDetails = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Replace with your actual API endpoint
-        const response = await fetch(`http://127.0.0.1:8000/api/student/courses/${courseId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch course details');
-        }
-        const data = await response.json();
-        setCourse(data);
+        const data = await fetchCourseContent(courseId);
+        setCourseData(data);
         
-        // Set active week based on current progress or server recommendation
-        if (data.currentWeek) {
-          setActiveWeek(data.currentWeek);
-        }
+        // Initialize progress and expanded state for each week
+        const initialProgress: Record<number, number> = {};
+        const initialExpanded: Record<number, boolean> = {};
+        data.weeks.forEach((week: Week) => {
+          const totalItems = week.videos.length + 
+                           week.practice_assignments.length + 
+                           week.graded_assignments.length;
+          initialProgress[week.week_no] = 0;
+          initialExpanded[week.week_no] = false;
+        });
+        setWeekProgress(initialProgress);
+        setExpandedItems(initialExpanded);
       } catch (error) {
         console.error('Error fetching course:', error);
         setError('Failed to load course details. Please try again later.');
@@ -58,126 +60,172 @@ export default function StudentCoursePage() {
     };
 
     if (courseId) {
-      fetchCourseDetails();
+      fetchData();
     }
   }, [courseId]);
 
-  // Fallback for demo purposes
-  const dummyCourse: Course = {
-    id: parseInt(courseId || '1'),
-    title: 'Introduction to Web Development',
-    description: 'Learn the fundamentals of web development including HTML, CSS, and JavaScript. This course covers everything from basic markup to advanced interactive web applications.',
-    instructor: 'Dr. Jane Smith',
-    startDate: '2025-01-15',
-    endDate: '2025-04-30',
-    totalWeeks: 12,
-    enrolledStudents: 127,
-    courseImage: '/course-image.jpg',
-    progress: 25
+  const calculateWeekProgress = (weekNo: number) => {
+    if (!courseData) return 0;
+    const week = courseData.weeks.find(w => w.week_no === weekNo);
+    if (!week) return 0;
+
+    const totalItems = week.videos.length + 
+                      week.practice_assignments.length + 
+                      week.graded_assignments.length;
+    if (totalItems === 0) return 0;
+
+    // Ensure progress doesn't exceed 100%
+    const progress = Math.min((weekProgress[weekNo] / totalItems) * 100, 100);
+    return progress;
   };
 
-  // Use dummy data if API fails or for development
-  const courseData = course || dummyCourse;
+  const updateWeekProgress = (weekNo: number, completed: number) => {
+    setWeekProgress(prev => ({
+      ...prev,
+      [weekNo]: completed
+    }));
+  };
+
+  const toggleWeekContent = (weekNo: number) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [weekNo]: !prev[weekNo]
+    }));
+    
+    // Update progress when week is expanded
+    if (!expandedItems[weekNo]) {
+      updateWeekProgress(weekNo, weekProgress[weekNo] + 1);
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Fixed width sidebar */}
-      <div className="w-64 flex-shrink-0">
-        <Sidebar
-          profileImage="/iitm_avatar.png"
-          profileTitle="21f3001255"
-          items={sidebarItems}
-        />
-      </div>
-      
-      {/* Main content area with proper padding */}
-      <div className="flex-1 overflow-auto">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <nav className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            <div className="flex space-x-8">
+              <Link to="/student/dashboard" className="flex items-center text-gray-700 hover:text-purple-600">
+                <Home className="w-5 h-5 mr-2" />
+                Home
+              </Link>
+              <Link to="/student/performance" className="flex items-center text-gray-700 hover:text-purple-600">
+                <Activity className="w-5 h-5 mr-2" />
+                Performance
+              </Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => setIsChatOpen(true)}
+                className="flex items-center text-gray-700 hover:text-purple-600"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="flex">
+        {/* Sidebar - Course Content */}
+        <div className="w-64 bg-white h-[calc(100vh-4rem)] shadow-md overflow-y-auto">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Course Content</h2>
+            {courseData?.weeks.map((week) => (
+              <div key={week.week_no} className="mb-4">
+                <button
+                  onClick={() => toggleWeekContent(week.week_no)}
+                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                    activeWeek === week.week_no
+                      ? 'bg-purple-50 text-purple-700'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">Week {week.week_no}</span>
+                    <span className="text-sm text-gray-500">
+                      {Math.round(calculateWeekProgress(week.week_no))}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-600 h-2 rounded-full transition-all"
+                      style={{ width: `${calculateWeekProgress(week.week_no)}%` }}
+                    ></div>
+                  </div>
+
+                  {expandedItems[week.week_no] && (
+                    <div className="mt-3 space-y-2 pl-2">
+                      {week.videos.map((video, idx) => (
+                        <button
+                          key={`video-${idx}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveWeek(week.week_no);
+                            updateWeekProgress(week.week_no, weekProgress[week.week_no] + 1);
+                          }}
+                          className="flex items-center text-sm text-gray-600 hover:text-purple-600 w-full py-1"
+                        >
+                          <BookOpen className="w-4 h-4 mr-2" />
+                          {video.title}
+                        </button>
+                      ))}
+                      {week.practice_assignments.map((assignment, idx) => (
+                        <button
+                          key={`practice-${idx}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveWeek(week.week_no);
+                            updateWeekProgress(week.week_no, weekProgress[week.week_no] + 1);
+                          }}
+                          className="flex items-center text-sm text-gray-600 hover:text-purple-600 w-full py-1"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Practice Assignment {idx + 1}
+                        </button>
+                      ))}
+                      {week.graded_assignments.map((assignment, idx) => (
+                        <button
+                          key={`graded-${idx}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveWeek(week.week_no);
+                            updateWeekProgress(week.week_no, weekProgress[week.week_no] + 1);
+                          }}
+                          className="flex items-center text-sm text-gray-600 hover:text-purple-600 w-full py-1"
+                        >
+                          <Award className="w-4 h-4 mr-2" />
+                          Graded Assignment {idx + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 p-6">
+          {loading ? (
             <LoadingSpinner />
-          </div>
-        ) : error ? (
-          <div className="p-6">
+          ) : error ? (
             <ErrorMessage message={error} />
-          </div>
-        ) : (
-          <div className="p-6 max-w-6xl mx-auto">
-            {/* Course Header */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-                <h1 className="text-3xl font-bold mb-2">{courseData.title}</h1>
-                <p className="text-indigo-100 mb-4">{courseData.description}</p>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center">
-                    <BookOpen size={18} className="mr-2" />
-                    <span>{courseData.totalWeeks} Weeks</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Users size={18} className="mr-2" />
-                    <span>{courseData.enrolledStudents} Students</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar size={18} className="mr-2" />
-                    <span>{courseData.startDate} to {courseData.endDate}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                  <h2 className="text-xl font-semibold text-gray-800">Your Progress</h2>
-                  <div className="flex items-center">
-                    <Clock size={18} className="mr-2 text-indigo-600" />
-                    <span className="text-indigo-600 font-medium">Week {activeWeek} of {courseData.totalWeeks}</span>
-                  </div>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                  <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${courseData.progress}%` }}></div>
-                </div>
-                
-                <div className="flex justify-between items-center text-sm text-gray-600">
-                  <div>0%</div>
-                  <div className="flex items-center">
-                    <Award size={16} className="mr-1 text-indigo-600" />
-                    <span className="font-medium text-indigo-600">{courseData.progress}% Complete</span>
-                  </div>
-                  <div>100%</div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Week Selection */}
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-3">Course Content</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {Array.from({ length: courseData.totalWeeks }, (_, i) => i + 1).map((week) => (
-                  <button
-                    key={week}
-                    className={`p-3 rounded-lg border ${
-                      activeWeek === week
-                        ? 'bg-indigo-600 text-white border-indigo-700'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
-                    } transition-colors duration-200`}
-                    onClick={() => setActiveWeek(week)}
-                  >
-                    Week {week}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Weekly Content */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <WeeklyCourseContent 
-                courseId={courseData.id} 
-                weekNo={activeWeek} 
-                role="student" 
-              />
-            </div>
-          </div>
-        )}
+          ) : courseData ? (
+            <WeeklyCourseContent 
+              courseId={parseInt(courseId || '0')} 
+              weekNo={activeWeek}
+              role="student"
+              onProgressUpdate={(completed) => updateWeekProgress(activeWeek, completed)}
+            />
+          ) : null}
+        </div>
       </div>
+
+      {/* Chat Overlay */}
+      <ChatOverlay isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }

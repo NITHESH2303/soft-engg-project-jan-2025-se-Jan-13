@@ -17,6 +17,7 @@ interface ChatComponentProps {
   initialHistory?: Message[];
   onMessageAdded?: (message: Message) => void;
   className?: string;
+  onHistoryChange?: (history: Message[]) => void;
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
@@ -25,6 +26,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   initialHistory = [],
   onMessageAdded,
   className = '',
+  onHistoryChange,
 }) => {
   const [history, setHistory] = useState<Message[]>(initialHistory);
   const [cleanedCompletion, setCleanedCompletion] = useState('');
@@ -45,29 +47,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     api: apiEndpoint,
     streamProtocol: 'text',
     onFinish: (prompt, completion) => {
-      // Clean up the final completion before adding to history
       const cleanedFinalCompletion = cleanStreamOutput(completion);
       
-      // Create the assistant message
       const assistantMessage: Message = { 
         role: 'assistant', 
         content: cleanedFinalCompletion, 
         timestamp: new Date() 
       };
       
-      // Update history with the assistant's response
-      // The user message is already in the history
-      setHistory(prevHistory => [
-        ...prevHistory,
-        assistantMessage
-      ]);
+      setHistory(prevHistory => {
+        const newHistory = [...prevHistory, assistantMessage];
+        if (onHistoryChange) {
+          onHistoryChange(newHistory);
+        }
+        return newHistory;
+      });
       
-      // Call the callback if provided
       if (onMessageAdded) {
         onMessageAdded(assistantMessage);
       }
       
-      // Reset the pending user message and cleaned completion
       setPendingUserMessage(null);
       setCleanedCompletion('');
       rawCompletionRef.current = '';
@@ -77,15 +76,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     }
   });
 
-  // Function to clean the stream output
   const cleanStreamOutput = (text: string): string => {
     return text
-      .replace(/^data:\s*/gm, '') // Remove "data: " prefix
-      .replace(/\n/g, ' ')        // Replace newlines with spaces
-      .trim();                    // Trim extra spaces
+      .replace(/^data:\s*/gm, '')
+      .replace(/\n/g, ' ')
+      .trim();
   };
 
-  // Update cleaned completion whenever raw completion changes
   useEffect(() => {
     if (rawCompletion !== rawCompletionRef.current) {
       rawCompletionRef.current = rawCompletion;
@@ -93,12 +90,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     }
   }, [rawCompletion]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, cleanedCompletion, pendingUserMessage]);
 
-  // Initialize with a welcome message if history is empty
   useEffect(() => {
     if (history.length === 0) {
       setTimeout(() => {
@@ -117,28 +112,29 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     
-    // Create user message
     const userMessage: Message = { 
       role: 'user', 
       content: input, 
       timestamp: new Date() 
     };
     
-    // Add user message to history immediately
-    setHistory(prevHistory => [...prevHistory, userMessage]);
+    setHistory(prevHistory => {
+      const newHistory = [...prevHistory, userMessage];
+      if (onHistoryChange) {
+        onHistoryChange(newHistory);
+      }
+      return newHistory;
+    });
     
-    // Call the callback if provided
     if (onMessageAdded) {
       onMessageAdded(userMessage);
     }
     
-    // Format history to match the expected API format
     const formattedHistory = history.map(msg => ({
       role: msg.role,
       content: msg.content
     }));
     
-    // Call complete manually with the correctly structured request body
     complete(input, {
       body: {
         message: input,
@@ -146,7 +142,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       }
     });
     
-    // Reset input after submitting
     setInput('');
   };
 

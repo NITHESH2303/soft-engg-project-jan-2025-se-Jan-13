@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from 'react-icons-kit';
 import { messageSquare } from 'react-icons-kit/feather/messageSquare';
 import { plus } from 'react-icons-kit/feather/plus';
 import { send } from 'react-icons-kit/feather/send';
 import { home } from 'react-icons-kit/feather/home';
 import { activity } from 'react-icons-kit/feather/activity';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ChatComponent from '../ChatComponent';
 
 interface RecentChat {
@@ -13,6 +13,12 @@ interface RecentChat {
   title: string;
   lastMessage: string;
   timestamp: Date;
+}
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: Date;
 }
 
 export default function Chat() {
@@ -33,6 +39,8 @@ export default function Chat() {
   const [selectedChat, setSelectedChat] = useState<number | null>(1);
   const [newChatTitle, setNewChatTitle] = useState('');
   const [showNewChatInput, setShowNewChatInput] = useState(false);
+  const location = useLocation();
+  const initialHistory = location.state?.chatHistory || [];
 
   const handleCreateNewChat = () => {
     if (showNewChatInput) {
@@ -166,6 +174,7 @@ export default function Chat() {
                     title="" 
                     className="h-full"
                     onMessageAdded={handleMessageAdded}
+                    initialHistory={initialHistory}
                   />
                 </div>
               </div>
