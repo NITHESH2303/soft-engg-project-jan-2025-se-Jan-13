@@ -10,6 +10,7 @@ class WeekwiseContent(Base):
     __tablename__ = "weekwise_content"
 
     id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=True, default="Learning Module")
     week_no = Column(Integer, nullable=False)  # Week number (e.g., Week 1, Week 2)
     term = Column(String, nullable=False)  # Term for which the content is released
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)  # Foreign key to Course

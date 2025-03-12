@@ -10,8 +10,9 @@ from ai_platform.agents.openai_agent import Agents
 from ai_platform.agents.streaming_services import OpenAIStreaming
 from starlette.responses import StreamingResponse
 from fastapi import APIRouter, Depends, HTTPException
-
 from ai_platform.apis.agents import crud
+from ai_platform.apis.courses.crud import get_course
+from ai_platform.apis.students.course_crud import get_course_weeks
 from ai_platform.schemas.ai_agent import AiAgentInDB, AiAgentCreate, AiAgentUpdate, CreateKnowledgeBaseResponse, \
     CreateKnowledgeBaseRequest
 from ai_platform.supafast.database import get_db
@@ -180,10 +181,11 @@ def delete_agent(agent_id: int, db: Session = Depends(get_db)):
 class StreamingRequest(BaseModel):
     message: str
     history: List[Dict[str, str]] = Field(default_factory=list, description="List of previous interactions")
+    metadata: Dict[str, str] | None
 
 
 @router.post("/host_agent")
-async def host_agent(request: StreamingRequest):
+async def host_agent(request: StreamingRequest, db: Session = Depends(get_db)):
     """
     **Host an AI agent conversation and stream responses.**
 
@@ -195,13 +197,33 @@ async def host_agent(request: StreamingRequest):
     """
     message = request.message
     history = request.history
+    metadata = request.metadata
+    course_id = metadata.get("course_id")
+    if course_id:
+        try:
+            course_week_details = get_course_weeks(db=db, course_id=int(course_id))
+            course_data = get_course(db=db, course_id=int(course_id))
+            course_context = f"Below is current course details where user opened the chatbot: {course_data}"
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=500, detail=f"Error from backend:{e}")
     #
-    response = await agents.parser_agent(message)
+    else:
+        course_context = None
+    response = await agents.parser_agent(message, context=course_context)
+    print("Parser Agent Response", response)
     collection_name = response['vector_index']
     print(f"Collection name to looked at.", collection_name)
-    vectordb = PgvectorDB(collection_name=collection_name, connection_str=os.getenv("SQLALCHEMY_DATABASE_URL"))
-    context = vectordb.get_context_for_query(message, include_metadata=False)
-    print(context)
+    if collection_name == "general":
+        context = ""
+    else:
+        vectordb = PgvectorDB(collection_name=collection_name, connection_str=os.getenv("SQLALCHEMY_DATABASE_URL"))
+        context = vectordb.get_context_for_query(message, include_metadata=False)
+        print(context)
+    if course_id:
+        context = context+(f" Below is the actual context for most recent user message:"
+                           f"Course Detail: {course_data}"
+                           f"Weekwise Details:\n{course_week_details}\n")
     response_stream = agents.stream_generator(await agents.host_agent(message,
                                                                       history=history,
                                                                       context=context, streaming=True))

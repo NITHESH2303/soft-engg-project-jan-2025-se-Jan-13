@@ -93,8 +93,6 @@ async def get_student_profile(
     if not student_profile:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
-    for course in student_profile.completed_courses:
-        print(course.__dict__, "Completed Courses")
     # Fetch completed courses
     completed_courses = [
         CourseProgress(
