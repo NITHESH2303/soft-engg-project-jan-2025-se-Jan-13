@@ -7,7 +7,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api/student';
 // Fetch courses for a student
 export const fetchCourses = async () => {
 
-  const response = await axios.get(`${API_BASE_URL}/courses`, {
+  const response = await axios.get(`${API_BASE_URL}/course/current`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('access_token')}`
     }
@@ -49,6 +49,22 @@ export const fetchStudentData = async () => {
 export const fetchCourseContent = async (courseId: string | undefined) => {
   try{
     const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`
+      }
+    })
+    
+    return response.data
+  } catch (error){
+    throw new Error('Failed to fetch course content')
+  }
+} 
+
+
+//Fetch student weekly course content
+export const fetchCourseDetails = async (courseId: string | undefined) => {
+  try{
+    const response = await axios.get(`${API_BASE_URL}/course/${courseId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access_token')}`
       }

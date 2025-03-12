@@ -155,7 +155,6 @@ def read_courses(
     """
     Get a list of courses with pagination.
     """
-    print(f"getting all courses")
     courses = get_courses(db, skip=skip, limit=limit)
     return courses
 

@@ -34,7 +34,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const rawCompletionRef = useRef('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
+  const getCourseIdFromUrl = () => {
+    const pathParts = window.location.pathname.split('/');
+    const courseIndex = pathParts.indexOf('course');
+    return courseIndex !== -1 && pathParts[courseIndex + 1] ? pathParts[courseIndex + 1] : null;
+  };
+  
   const {
     completion: rawCompletion,
     input,
@@ -134,11 +139,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       role: msg.role,
       content: msg.content
     }));
-    
+    const courseId = getCourseIdFromUrl();
     complete(input, {
       body: {
         message: input,
-        history: formattedHistory
+        history: formattedHistory,
+        metadata: {'course_id': courseId}
       }
     });
     

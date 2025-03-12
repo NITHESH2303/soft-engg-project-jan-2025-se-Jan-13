@@ -47,6 +47,18 @@ class WeekContentResponse(BaseModel):
     graded_assignments: List[GradedAssignmentResponse]
 
 
+class WeekContentDetails(BaseModel):
+    title: str | None
+    week_no: int
+    term: str
+    upload_date: datetime
+
+
 class CourseContentResponse(BaseModel):
     course_id: int
     weeks: List[WeekContentResponse]
+
+
+class CourseWeekWiseDetails(BaseModel):
+    course_id: int
+    weeks: List[WeekContentDetails]

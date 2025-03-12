@@ -1,4 +1,4 @@
-# crud/course.py
+# crud/test_course.py
 from sqlalchemy.orm import Session
 from ai_platform.supafast.models.courses import Course
 from ai_platform.schemas.admin import CourseCreate, CourseUpdate

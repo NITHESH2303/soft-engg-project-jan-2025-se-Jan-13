@@ -32,7 +32,7 @@ class AssignmentGradeRequest(BaseModel):
         orm_mode = True
 
 
-# schemas/course.py
+# schemas/test_course.py
 from pydantic import BaseModel
 from typing import Optional, List
 

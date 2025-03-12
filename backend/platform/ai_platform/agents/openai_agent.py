@@ -39,8 +39,12 @@ class Agents(OpenAIStreaming):
         else:
             return self.call_openai_sync(messages)  # Fixed non-streaming response
 
-    async def parser_agent(self, user_query, history: List[Dict] = None, streaming=False):
-        messages = [{"role": "system", "content": INST_PARSER_AGENT}]
+    async def parser_agent(self, user_query, history: List[Dict] = None, context: str = None, streaming=False):
+        if context:
+            system_prompt = INST_PARSER_AGENT + f"\n Below is the actual context for most recent user message: {context}\n"
+        else:
+            system_prompt = INST_PARSER_AGENT
+        messages = [{"role": "system", "content": system_prompt}]
         if history:
             messages.extend(history)
         messages.append({"role": "user", "content": user_query})
@@ -54,16 +58,16 @@ class Agents(OpenAIStreaming):
 
     def load_course_data(self, course_name):
         """Loads course data from the specified course_data directory."""
-        
+
         # Define the correct absolute path
         base_path = os.path.join(
             os.getcwd(),  # Get current working directory
             "backend", "platform", "ai_platform", "embedding_data", "course_data"
         )
-        
+
         # Create the full path for the course folder
         course_folder = os.path.join(base_path, course_name.replace(" ", "_").replace("-", "_"))
-        
+
         data = {}
         for file_name in ["content.txt", "summary.txt", "faqs.txt"]:
             file_path = os.path.join(course_folder, file_name)
@@ -101,4 +105,4 @@ class Agents(OpenAIStreaming):
                 messages.extend(history)
             return await super().streamNow(response_text, messages=messages)
         else:
-            return response_text  
+            return response_text

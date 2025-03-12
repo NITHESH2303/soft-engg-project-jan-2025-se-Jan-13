@@ -11,10 +11,65 @@ router = APIRouter()
 
 @router.post("", response_model=WeekwiseContentResponse)
 def create_weekwise_content(content: WeekwiseContentCreate, db: Session = Depends(get_db)):
-    return crud.create_weekwise_content(db, content)
+    db_content = crud.create_weekwise_content(db, content)
+    # Convert SQLAlchemy model to Pydantic model
+    content_response = WeekwiseContentResponse(
+        id=db_content.id,
+        course_id=db_content.course_id,
+        week_no=db_content.week_no,
+        term=db_content.term,
+        upload_date=db_content.upload_date,
+        created_at=db_content.created_at,
+        modified_at=db_content.modified_at,
+        video_lectures=[
+            VideoLectureBase(
+                id=video.id,
+                title=video.title,
+                transcript=video.transcript,
+                duration=video.duration,
+                video_link=video.video_link,
+                course_id=video.course_id,
+                week_no=video.week_no,
+                created_at=video.created_at,
+                modified_at=video.modified_at,
+            )
+            for video in db_content.videos
+        ],
+        practice_assignments=[
+            PracticeAssignmentBase(
+                id=assignment.id,
+                title=assignment.title,
+                deadline=assignment.deadline,
+                is_coding_assignment=assignment.is_coding_assignment,
+                description=assignment.description,
+                assignment_content=assignment.assignment_content,
+                course_id=assignment.course_id,
+                week_no=assignment.week_no,
+                created_at=assignment.created_at,
+                modified_at=assignment.modified_at,
+            )
+            for assignment in db_content.practice_assignments
+        ],
+        graded_assignments=[
+            GradedAssignmentBase(
+                id=assignment.id,
+                title=assignment.title,
+                deadline=assignment.deadline,
+                is_coding_assignment=assignment.is_coding_assignment,
+                description=assignment.description,
+                assignment_content=assignment.assignment_content,
+                course_id=assignment.course_id,
+                week_no=assignment.week_no,
+                created_at=assignment.created_at,
+                modified_at=assignment.modified_at,
+            )
+            for assignment in db_content.graded_assignments
+        ],
+    )
+    return content_response
 
 
-@router.get("/{course_id}/{content_id}", response_model=WeekwiseContentResponse)
+@router.get("/course/{course_id}/week/{content_id}", response_model=WeekwiseContentResponse)
 def read_weekwise_content(course_id: int, content_id: int, db: Session = Depends(get_db)):
     db_content = crud.get_weekwise_content(db, course_id=course_id, content_id=content_id)
     if db_content is None:

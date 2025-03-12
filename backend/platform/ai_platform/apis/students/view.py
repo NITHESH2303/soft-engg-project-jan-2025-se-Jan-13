@@ -1,7 +1,11 @@
 from typing import List, Optional
 from sqlalchemy import func
+
+from ai_platform.apis.students.course_crud import get_course_weeks
 from ai_platform.schemas.courses import Student
 from ai_platform.schemas.student import StudentCourseAnalyticsResponse, AssignmentSubmissionCreate
+from ai_platform.schemas.weekwise_content import CourseContentResponse, WeekContentResponse, VideoLectureResponse, \
+    PracticeAssignmentResponse, GradedAssignmentResponse, CourseWeekWiseDetails, WeekContentDetails
 from ai_platform.supafast.models.courses import Assignment, AssignmentSubmission
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -12,11 +16,13 @@ from ai_platform.supafast.models.courses import Course
 from ai_platform.supafast.models.users import User, Student
 from datetime import datetime
 
+from ai_platform.supafast.models.weekwise_content import WeekwiseContent, VideoLecture, PracticeAssignment, \
+    GradedAssignment
 
 router = APIRouter()
 
 
-@router.get("/courses", response_model=List[CourseResponse])
+@router.get("/course/current", response_model=List[CourseResponse])
 async def get_student_courses(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
@@ -48,6 +54,29 @@ async def get_student_courses(
     courses = db.query(Course).filter(Course.id.in_(course_ids)).all()
 
     return courses
+
+
+@router.get("/course/{course_id}/weeks", response_model=CourseWeekWiseDetails)
+async def get_course_content(
+        course_id: int,
+        db: Session = Depends(get_db)
+):
+    """
+    **Retrieve the content for a specific course, including each week.**
+
+    **Args:**
+        course_id (int): The ID of the course for which content is being retrieved.
+        db (Session): The database session dependency.
+
+    **Returns:**
+        CourseContentResponse: A structured response containing course ID
+        and weekly content details.
+
+    **Raises:**
+        HTTPException 404: If no content is found for the given course ID.
+    """
+
+    return get_course_weeks(db=db, course_id=course_id)
 
 
 @router.post("/assignment/submit", status_code=201)

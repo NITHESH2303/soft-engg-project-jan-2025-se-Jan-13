@@ -5,7 +5,6 @@ from ai_platform.supafast.models.ai_agent import Conversation
 
 
 def create_conversation(db: Session, conversation: ConversationCreate):
-    print(f"This is conversation in create_conversation api", conversation.model_dump())
     new_convo = Conversation(**conversation.model_dump(), id=uuid.uuid4())
     db.add(new_convo)
     db.commit()
