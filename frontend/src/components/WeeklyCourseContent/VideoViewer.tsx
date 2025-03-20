@@ -1,4 +1,3 @@
-// VideoViewer.tsx
 import { Video } from './WeeklyCourseContent';
 import { Clock, X, Edit, Save } from 'lucide-react';
 import { useState } from 'react';
@@ -79,20 +78,19 @@ export default function VideoViewer({ video, onClose, isAdmin, onUpdate }: Video
         </div>
       </div>
       
-      <div className="aspect-w-16 aspect-h-9 bg-gray-900 rounded-lg mb-6 overflow-hidden shadow-md">
+      {/* Updated video container with proper aspect ratio and sizing */}
+      <div className="relative w-full pt-[56.25%] bg-gray-900 rounded-lg mb-6 overflow-hidden shadow-md">
         {video.video_link ? (
           <iframe
-            width="100%"
-            height="100%"
             src={getEmbedUrl(isEditing ? editedVideo.video_link : video.video_link)}
             title={video.title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            className="w-full h-full"
+            className="absolute top-0 left-0 w-full h-full"
           ></iframe>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-400">
             No video available
           </div>
         )}
@@ -121,7 +119,9 @@ export default function VideoViewer({ video, onClose, isAdmin, onUpdate }: Video
             className="w-full h-40 p-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
           />
         ) : (
-          <p className="text-gray-700 leading-relaxed">{video.transcript || 'No transcript available'}</p>
+          <div className="max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+            <p className="text-gray-700 leading-relaxed">{video.transcript || 'No transcript available'}</p>
+          </div>
         )}
       </div>
 

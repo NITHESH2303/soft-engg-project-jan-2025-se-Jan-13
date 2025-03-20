@@ -188,9 +188,21 @@ export default function WeeklyCourseContent({
     const content = weekContent || weekContents[weekNo];
     if (!content) return 0;
     
-    // In a real app, you would track completed items and calculate percentage
-    // For now, we'll return a placeholder value
-    return weekProgress[weekNo] || 0;
+    // Calculate total items
+    const totalItems = 
+      content.video_lectures.length + 
+      content.practice_assignments.length + 
+      content.graded_assignments.length;
+    
+    if (totalItems === 0) return 0;
+    
+    // Calculate viewed items (if the week is expanded, count all items as viewed)
+    const isExpanded = expandedWeeks[weekNo];
+    if (isExpanded) {
+      return 100; // Return 100% when the week is expanded
+    }
+    
+    return 0;
   };
 
   // Handle expanding/collapsing a week
