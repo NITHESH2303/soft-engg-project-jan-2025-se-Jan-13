@@ -1,5 +1,72 @@
 Course: Business Data Management
 
-This course covers database management systems, SQL, and data governance.
+This course will facilitate the students to:
 
-Detailed Course Content Here...
+1) Understand the business context: consumption patterns, micro-economic concepts underlying demand and supply,
+2) Analyse firm-level and industry-level data,
+3) Discover how businesses operate, and how they are actively managed using data dashboards,
+4) Get a handle on the data that originates from business processes,
+5) Identify the techniques used to represent and structure this data,
+6) Gain skills on the use of worksheets to organise, interpret and present data.
+
+Course Faculty:
+
+1. G. Venkatesh
+
+Dr. Venkatesh is a Professor of Practice at IIT Madras, where he is involved with several projects in the field of education. He is also a Fellow and Director of Sasken Communication Technologies Ltd, a leading Indian R&D services provider, and a founder of Mylspot, an education technology startup that aims to bridge knowledge gaps of students through a mentored learning platform.
+Dr Venkatesh is a graduate in electronics from IIT Madras, PhD in Computer Science from TIFR, Mumbai and was a faculty member of the Computer Science & Engineering Dept of IIT Bombay for 8 years where his research interests revolved around declarative languages and their application to the design of embedded systems. He moved to the industry when Sasken was being formed, where he led their technology activities for over two decades. He was a visiting/adjunct faculty at IIM Bangalore for 10 years and a Chair Professor in the department of EE at IIT Madras for 3 years.
+Dr. Venkatesh was elected as a fellow of the Indian National Academy of Engineers in 2006 and the IETE in 2012. He won the Technomentor award of the Indian Electronics and Semiconductor Association in 2013 and the Vasvik award for industrial research in 2015. Dr. Venkatesh serves on a number of government, industry and investor committees and boards in the areas of microelectronics, telecommunications and education.
+
+2. M. Sureshbabu
+
+Suresh Babu has completed his M.S. in Development Economics and M.Phil. in Applied Economics before completing his Ph.D. from Jawaharlal Nehru University, New Delhi. He currently is a professor at the Department of Humanities and Social Sciences, and his key areas of research are in applied macroeconomics, trade & development and industrial economics.
+
+3. Milind Gandhe
+
+Milind is the Chief Program Officer at the Center of Excellence for Machine Intelligence and Robotics, IIIT Bangalore. Prior to joining IIITB, Milind has 26 years of experience in the corporate sector, first with Sasken Communication Technologies and most recently with Tata Elxsi. Milind has a PhD in Computer Science and Engineering from IIT Bombay. Before his PhD, Milind obtained a B.Tech and an M. Tech also from IIT Bombay. His thesis was on Abstract Interpretation of Functional Programming Languages. Milind also has a Diploma in Practicing Management from INSEAD, France.
+
+Course Instructors :
+
+Ashwin J. Baliga
+
+T.S. Hariharan
+
+Jaimini Bhattacharyya
+
+Dr. Malolan Sundararaman
+
+S. Srivatsa Srinivas
+
+Sukraat Dang
+
+
+Here is the Course Content of week 4
+
+
+L4.1: Introduction to Pivot tables
+
+Concept Covered:
+
+1) Setting up Rows, Columns and Data in Pivot tables
+2) Summarising data
+3) Filters in Pivot tables
+
+
+L4.2: Representing data visually
+
+Concept Covered:
+
+1) Pie charts
+2) Bar charts
+3) Line charts
+
+L4.3: Understanding Market Share - Part 1
+
+Concept Covered:
+
+1) Understanding loan origination dataset
+2) Long tail distribution
+3) Analysing loan data with pivot tables
+4) Understanding market share of different segments
+
+L4.4: Understanding Market Share - Part 2

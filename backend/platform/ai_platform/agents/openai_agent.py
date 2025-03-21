@@ -4,6 +4,9 @@ from typing import List, Dict
 from openai import OpenAI
 from ai_platform.agents.prompts import INST_HOST_AGENT, INST_PARSER_AGENT
 from ai_platform.agents.streaming_services import OpenAIStreaming
+from ai_platform.agents.tools_implemented import get_course_content
+from ai_platform.supafast.database import get_db
+from ai_platform.agents.tools import course_content_tool
 
 
 class Agents(OpenAIStreaming):
@@ -11,18 +14,51 @@ class Agents(OpenAIStreaming):
         super().__init__(*args, **kwargs)
         self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    def call_openai_sync(self, messages):
+    def call_openai_sync(self, messages: List[Dict[str, str]], tools=None) -> str:
+        # Prepend system prompt to messages
+
+        # Initial call to OpenAI with tools
         completion = self.openai_client.chat.completions.create(
             messages=messages,
             model="gpt-4o-mini",
+            tools=tools if tools else None
         )
-        input_tokens = completion.usage.prompt_tokens
-        output_tokens = completion.usage.completion_tokens
-        total_tokens = completion.usage.total_tokens
-        cost_input = (input_tokens / 1000) * 0.03  # $0.03 per 1k input tokens
-        cost_output = (output_tokens / 1000) * 0.06  # $0.06 per 1k output tokens
-        total_cost = cost_input + cost_output
-        return completion.choices[0].message.content
+
+        response = completion.choices[0].message
+
+        # If no tool calls, return the response directly
+        if not response.tool_calls:
+            return response.content
+
+        # Append the assistant message with tool_calls to the message history
+        messages.append({
+            "role": "assistant",
+            "content": response.content if response.content else None,
+            "tool_calls": [tc.model_dump() for tc in response.tool_calls]  # Convert tool_calls to dict
+        })
+
+        # Handle each tool call
+        for tool_call in response.tool_calls:
+            if tool_call.function.name == "get_course_content":
+                args = json.loads(tool_call.function.arguments)
+                content = get_course_content(
+                    db=next(get_db()),
+                    **args
+                )
+                # Append the tool response
+                messages.append({
+                    "role": "tool",
+                    "content": json.dumps(content),
+                    "tool_call_id": tool_call.id
+                })
+
+        # Second call to OpenAI with the updated message history
+        final_completion = self.openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini"
+        )
+
+        return final_completion.choices[0].message.content
 
     async def host_agent(self, user_query, context=None, history: List[Dict] = None, streaming=False):
         if context:
@@ -33,11 +69,11 @@ class Agents(OpenAIStreaming):
         messages = [{"role": "system", "content": host_prompt}]
         if history:
             messages.extend(history)
-
+        messages.append({"role": "user", "content": user_query})
         if streaming:
             return await super().streamNow(user_query, messages=messages)
         else:
-            return self.call_openai_sync(messages)  # Fixed non-streaming response
+            return self.call_openai_sync(messages, tools=[course_content_tool])  # Fixed non-streaming response
 
     async def parser_agent(self, user_query, history: List[Dict] = None, context: str = None, streaming=False):
         if context:

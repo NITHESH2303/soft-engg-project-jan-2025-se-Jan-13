@@ -29,6 +29,7 @@ class VideoLecture(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)  # Foreign key to Course
+    lecture_no = Column(Integer, nullable=True) # lecture Number
     week_no = Column(Integer, nullable=False)  # Part of the composite foreign key
     title = Column(String, nullable=False)  # Title of the video
     transcript = Column(String, nullable=True)  # Transcript of the video
