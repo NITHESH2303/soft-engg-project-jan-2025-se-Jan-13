@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useCompletion } from '@ai-sdk/react';
 import { Icon } from 'react-icons-kit';
 import { send } from 'react-icons-kit/feather/send';
 import { paperclip } from 'react-icons-kit/feather/paperclip';
@@ -21,7 +20,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/host_agent',
+  apiEndpoint = 'http://127.0.0.1:8000/api/agent/stream',
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,
@@ -29,75 +28,105 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   onHistoryChange,
 }) => {
   const [history, setHistory] = useState<Message[]>(initialHistory);
-  const [cleanedCompletion, setCleanedCompletion] = useState('');
-  const [pendingUserMessage, setPendingUserMessage] = useState<Message | null>(null);
-  const rawCompletionRef = useRef('');
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentResponse, setCurrentResponse] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const fullResponseRef = useRef<string>('');
+
   const getCourseIdFromUrl = () => {
     const pathParts = window.location.pathname.split('/');
     const courseIndex = pathParts.indexOf('course');
     return courseIndex !== -1 && pathParts[courseIndex + 1] ? pathParts[courseIndex + 1] : null;
   };
-  
-  const {
-    completion: rawCompletion,
-    input,
-    setInput,
-    handleInputChange,
-    isLoading,
-    error,
-    complete
-  } = useCompletion({
-    api: apiEndpoint,
-    streamProtocol: 'text',
-    onFinish: (prompt, completion) => {
-      const cleanedFinalCompletion = cleanStreamOutput(completion);
-      
-      const assistantMessage: Message = { 
-        role: 'assistant', 
-        content: cleanedFinalCompletion, 
-        timestamp: new Date() 
-      };
-      
-      setHistory(prevHistory => {
-        const newHistory = [...prevHistory, assistantMessage];
-        if (onHistoryChange) {
-          onHistoryChange(newHistory);
-        }
-        return newHistory;
-      });
-      
-      if (onMessageAdded) {
-        onMessageAdded(assistantMessage);
-      }
-      
-      setPendingUserMessage(null);
-      setCleanedCompletion('');
-      rawCompletionRef.current = '';
-    },
-    onError: (error) => {
-      console.error('Error during completion:', error);
-    }
-  });
 
-  const cleanStreamOutput = (text: string): string => {
-    return text
-      .replace(/^data:\s*/gm, '')
-      .replace(/\n/g, ' ')
-      .trim();
+  // Function to prepare chat history for API
+  const prepareHistoryForApi = (messageHistory: Message[]) => {
+    // Filter out only essential data and remove timestamps
+    return messageHistory.map(({ role, content }) => ({
+      role,
+      content
+    }));
+  };
+
+  const handleStream = (query: string, courseId: string | null) => {
+    setIsLoading(true);
+    setError(null);
+    setCurrentResponse('');
+    fullResponseRef.current = '';
+
+    const url = new URL(apiEndpoint);
+    url.searchParams.append('query', query);
+    if (courseId) {
+      url.searchParams.append('course_id', courseId);
+    }
+    
+    // Add chat history to the request
+    // Exclude the last user message as it's already being sent as 'query'
+    const historyToSend = history.length > 0 ? prepareHistoryForApi(history) : [];
+    const historyJson = JSON.stringify(historyToSend);
+    url.searchParams.append('history', historyJson);
+
+    const source = new EventSource(url.toString());
+    eventSourceRef.current = source;
+
+    source.onmessage = (event) => {
+      const chunk = JSON.parse(event.data);
+      console.log(chunk);
+      
+      if (chunk.type === 'text') {
+        fullResponseRef.current += chunk.content;
+        setCurrentResponse(fullResponseRef.current);
+      } else if (chunk.type === 'end') {
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: fullResponseRef.current,
+          timestamp: new Date(),
+        };
+        
+        setHistory((prevHistory) => {
+          const newHistory = [...prevHistory, assistantMessage];
+          if (onHistoryChange) {
+            onHistoryChange(newHistory);
+          }
+          return newHistory;
+        });
+        
+        if (onMessageAdded) {
+          onMessageAdded(assistantMessage);
+        }
+        
+        source.close();
+        setIsLoading(false);
+        setCurrentResponse('');
+        fullResponseRef.current = '';
+      } else if (chunk.type === 'error') {
+        setError(chunk.content);
+        source.close();
+        setIsLoading(false);
+      }
+    };
+
+    source.onerror = () => {
+      setError('An error occurred while streaming the response.');
+      source.close();
+      setIsLoading(false);
+    };
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
   };
 
   useEffect(() => {
-    if (rawCompletion !== rawCompletionRef.current) {
-      rawCompletionRef.current = rawCompletion;
-      setCleanedCompletion(cleanStreamOutput(rawCompletion));
-    }
-  }, [rawCompletion]);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [history, cleanedCompletion, pendingUserMessage]);
+  }, [history, currentResponse]);
 
   useEffect(() => {
     if (history.length === 0) {
@@ -106,48 +135,43 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           {
             role: 'assistant',
             content: "👋 Hi there! I'm your AI assistant for this course. How can I help you today?",
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         ]);
       }, 500);
     }
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
   }, []);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    
-    const userMessage: Message = { 
-      role: 'user', 
-      content: input, 
-      timestamp: new Date() 
+
+    const userMessage: Message = {
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
     };
-    
-    setHistory(prevHistory => {
+
+    setHistory((prevHistory) => {
       const newHistory = [...prevHistory, userMessage];
       if (onHistoryChange) {
         onHistoryChange(newHistory);
       }
       return newHistory;
     });
-    
+
     if (onMessageAdded) {
       onMessageAdded(userMessage);
     }
-    
-    const formattedHistory = history.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
+
     const courseId = getCourseIdFromUrl();
-    complete(input, {
-      body: {
-        message: input,
-        history: formattedHistory,
-        metadata: {'course_id': courseId}
-      }
-    });
-    
+    handleStream(input, courseId);
+
     setInput('');
   };
 
@@ -159,56 +183,67 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
-      
+
       <div className="flex-1 overflow-auto p-4" ref={messagesContainerRef}>
         <div className="flex flex-col space-y-4">
           {history.map((message, index) => (
             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-4 rounded-2xl ${
-                message.role === 'user' 
-                  ? 'bg-purple-600 text-white ml-auto' 
-                  : 'bg-white/10 text-white'
-              }`}>
+              <div
+                className={`max-w-[80%] p-4 rounded-2xl ${
+                  message.role === 'user' ? 'bg-purple-600 text-white ml-auto' : 'bg-white/10 text-white'
+                }`}
+              >
                 <div className="whitespace-pre-wrap">{message.content}</div>
-                <div className={`text-xs mt-1 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}>
+                <div
+                  className={`text-xs mt-1 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}
+                >
                   {formatTime(message.timestamp)}
                 </div>
               </div>
             </div>
           ))}
-          
+
           {isLoading && (
             <div className="flex justify-start">
               <div className="max-w-[80%] p-4 rounded-2xl bg-white/10 text-white">
                 <div className="whitespace-pre-wrap">
-                  {cleanedCompletion || (
+                  {currentResponse || (
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '0ms' }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '150ms' }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '300ms' }}
+                      ></div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           )}
-          
+
           {error && (
             <div className="p-3 text-red-500 border border-red-300 rounded-lg my-2">
-              Error: {error.message}
+              Error: {error}
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
       </div>
-      
+
       <div className="p-4 border-t border-white/20">
         <form onSubmit={handleFormSubmit} className="flex items-end gap-2">
           <div className="flex-1 relative">
             <textarea
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
               className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none min-h-[50px] max-h-[150px]"
               rows={1}

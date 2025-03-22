@@ -1,18 +1,95 @@
 import json
 import os
-from typing import List, Dict
+from typing import List, Dict, AsyncGenerator
+
+from langchain_core.messages import SystemMessage
 from openai import OpenAI
 from ai_platform.agents.prompts import INST_HOST_AGENT, INST_PARSER_AGENT
 from ai_platform.agents.streaming_services import OpenAIStreaming
 from ai_platform.agents.tools_implemented import get_course_content
 from ai_platform.supafast.database import get_db
 from ai_platform.agents.tools import course_content_tool
+from langchain_openai import ChatOpenAI
 
 
 class Agents(OpenAIStreaming):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.system_prompt = SystemMessage(content=INST_HOST_AGENT)
+
+    async def stream_response(
+            self,
+            user_input: str,
+            course_id: int = None,
+            chat_history: List[Dict[str, str]] = [],
+            context: str = None
+    ) -> AsyncGenerator[str, None]:
+        """
+        Stream the agent's response to the frontend using LangChain and tool calling.
+        """
+        if context:
+            host_prompt = self.system_prompt.content + "\nHere is the context...\n" + context
+        else:
+            host_prompt = self.system_prompt.content
+        messages = [{"role": "system", "content": host_prompt}]
+        for msg in chat_history:
+            if msg.get("role") == "user":
+                messages.append({"role": "user", "content": msg.get("content", "")})
+            elif msg.get("role") == "assistant":
+                messages.append({"role": "assistant", "content": msg.get("content", "")})
+        # Append course_id to user input if provided
+        if course_id:
+            user_input += f" (Course ID: {course_id})"
+        messages.append({"role": "user", "content": user_input})
+        # Step 1: Synchronous call to handle tool calling
+        completion = self.openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            tools=[course_content_tool]  # Use the same tool as call_openai_sync
+        )
+        response = completion.choices[0].message
+        # Step 2: Process the response
+        if response.tool_calls:
+            # Append assistant message with tool calls
+            messages.append({
+                "role": "assistant",
+                "content": response.content if response.content else None,
+                "tool_calls": [tc.model_dump() for tc in response.tool_calls]
+            })
+            # Handle tool calls
+            for tool_call in response.tool_calls:
+                if tool_call.function.name == "get_course_content":
+                    args = json.loads(tool_call.function.arguments)
+                    print(f"Tool call detected: get_course_content with args {args}")
+                    content = get_course_content(next(get_db()), **args)
+                    print(f"Response from get_course_content: {content}")
+                    messages.append({
+                        "role": "tool",
+                        "content": json.dumps(content),
+                        "tool_call_id": tool_call.id
+                    })
+                    # Step 3: Stream the final response
+                    stream = self.openai_client.chat.completions.create(
+                        messages=messages,
+                        model="gpt-4o-mini",
+                        stream=True
+                    )
+                    for chunk in stream:
+                        if chunk.choices[0].delta.content:
+                            yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
+        else:
+            # No tool calls, stream the response directly
+            stream = self.openai_client.chat.completions.create(
+                messages=messages,
+                model="gpt-4o-mini",
+                stream=True
+            )
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
+
+        yield json.dumps({"type": "end"})
 
     def call_openai_sync(self, messages: List[Dict[str, str]], tools=None) -> str:
         # Prepend system prompt to messages
@@ -31,6 +108,7 @@ class Agents(OpenAIStreaming):
             return response.content
 
         # Append the assistant message with tool_calls to the message history
+        print(response)
         messages.append({
             "role": "assistant",
             "content": response.content if response.content else None,
@@ -41,10 +119,12 @@ class Agents(OpenAIStreaming):
         for tool_call in response.tool_calls:
             if tool_call.function.name == "get_course_content":
                 args = json.loads(tool_call.function.arguments)
+                print(f"Below are the args to pass the function get course content: {args}")
                 content = get_course_content(
                     db=next(get_db()),
                     **args
                 )
+                print(f"Content received from get coure_content: {content}")
                 # Append the tool response
                 messages.append({
                     "role": "tool",

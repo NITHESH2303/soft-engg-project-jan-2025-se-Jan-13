@@ -15,5 +15,5 @@ async def test_parcel_agent():
 
 @pytest.mark.asyncio
 async def test_host_agent():
-    response = await agents.host_agent("what is in the week 4 of this course id", context="Course id is 4")
+    response = await agents.host_agent("can you help me with the graded assignment of week 4", context="Course id is 4")
     print(response)

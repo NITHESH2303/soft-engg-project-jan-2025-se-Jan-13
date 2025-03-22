@@ -10,6 +10,7 @@ class AiAgent(Base):
     __tablename__ = "ai_agents"
 
     id = Column(Integer, primary_key=True, index=True)
+    system_prompt = Column(String, nullable=True, server_default="You are helpful assistant.")
     name = Column(String, index=True)
     model_name = Column(String, default="gpt-4")
     model_type = Column(String)

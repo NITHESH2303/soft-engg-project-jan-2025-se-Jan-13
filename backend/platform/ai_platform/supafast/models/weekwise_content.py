@@ -53,6 +53,7 @@ class GradedAssignment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=True)
+    assignment_no = Column(Integer,nullable=True,default=1)
     description = Column(String, nullable=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)  # Foreign key to Course
     week_no = Column(Integer, nullable=False)  # Part of the composite foreign key
@@ -79,6 +80,7 @@ class PracticeAssignment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=True)
+    assignment_no = Column(Integer, nullable=True, default=1)
     description = Column(String, nullable=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)  # Foreign key to Course
     week_no = Column(Integer, nullable=False)  # Part of the composite foreign key

@@ -5,12 +5,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 import pdfplumber
 from io import BytesIO
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File, Form, Query
 from ai_platform.agents.openai_agent import Agents
 from ai_platform.agents.streaming_services import OpenAIStreaming
 from starlette.responses import StreamingResponse
 from fastapi import APIRouter, Depends, HTTPException
 from ai_platform.apis.agents import crud
+from ai_platform.apis.agents.crud import get_agent
 from ai_platform.apis.courses.crud import get_course
 from ai_platform.apis.students.course_crud import get_course_weeks
 from ai_platform.schemas.ai_agent import AiAgentInDB, AiAgentCreate, AiAgentUpdate, CreateKnowledgeBaseResponse, \
@@ -18,6 +19,8 @@ from ai_platform.schemas.ai_agent import AiAgentInDB, AiAgentCreate, AiAgentUpda
 from ai_platform.supafast.database import get_db
 from ai_platform.vectordb.db_pgvector import PgvectorDB
 from docx import Document
+from sse_starlette.sse import EventSourceResponse
+import json
 
 streamClient = OpenAIStreaming()
 agents = Agents()
@@ -221,9 +224,9 @@ async def host_agent(request: StreamingRequest, db: Session = Depends(get_db)):
         context = vectordb.get_context_for_query(message, include_metadata=False)
         print(context)
     if course_id:
-        context = context+(f" Below is the actual context for most recent user message:"
-                           f"Course Detail: {course_data}"
-                           f"Weekwise Details:\n{course_week_details}\n")
+        context = context + (f" Below is the actual context for most recent user message:"
+                             f"Course Detail: {course_data}"
+                             f"Weekwise Details:\n{course_week_details}\n")
     response_stream = agents.stream_generator(await agents.host_agent(message,
                                                                       history=history,
                                                                       context=context, streaming=True))
@@ -247,3 +250,56 @@ async def openai_streaming(request):
     return StreamingResponse(
         streamClient.stream_string("Sample Streaming Data"),
         media_type='text/event-stream')
+
+
+@router.get("/stream")
+async def stream_agent_response(query: str, course_id: int = None,
+                                history: Optional[str] = Query(None, description="JSON-encoded chat history"),
+                                db: Session = Depends(get_db),
+                                agent_id: Optional[int] = None):
+    if agent_id:
+        agent = get_agent(db, agent_id)
+        print(agent)
+    if course_id:
+        try:
+            course_week_details = get_course_weeks(db=db, course_id=course_id)
+            course_data = get_course(db=db, course_id=course_id)
+            course_context = f"Below is current course details where user opened the chatbot: {course_data}"
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=500, detail=f"Error from backend:{e}")
+
+    else:
+        course_context = None
+    response = await agents.parser_agent(query, context=course_context)
+    print("Parser Agent Response", response)
+    collection_name = response['vector_index']
+    print(f"Collection name to looked at.", collection_name)
+    if collection_name == "general":
+        context = ""
+    else:
+        vectordb = PgvectorDB(collection_name=collection_name, connection_str=os.getenv("SQLALCHEMY_DATABASE_URL"))
+        context = vectordb.get_context_for_query(query, include_metadata=False)
+        print(context)
+    if course_id:
+        context = context + (f" Below is the actual context for most recent user message:"
+                             f"Course Detail: {course_data}"
+                             f"Weekwise Details:\n{course_week_details}\n")
+
+    async def event_generator():
+        # Parse history if provided
+        chat_history = []
+        if history:
+            try:
+                chat_history = json.loads(history)
+                if not isinstance(chat_history, list):
+                    raise ValueError("History must be a list of message objects")
+            except (json.JSONDecodeError, ValueError):
+                yield {"data": json.dumps({"type": "error", "content": "Invalid history format"})}
+                return
+                # Stream the response with history
+
+        async for chunk in agents.stream_response(query, course_id, chat_history, context=context):
+            yield {"data": chunk}
+
+    return EventSourceResponse(event_generator())
