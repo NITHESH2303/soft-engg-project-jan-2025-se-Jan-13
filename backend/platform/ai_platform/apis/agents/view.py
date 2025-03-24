@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 import pdfplumber
 from io import BytesIO
 from fastapi import UploadFile, File, Form, Query
-from ai_platform.agents.openai_agent import Agents
+
+from ai_platform.agents.framework_agentic import Agents
+# from ai_platform.agents.openai_agent import Agents
 from ai_platform.agents.streaming_services import OpenAIStreaming
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, JSONResponse
 from fastapi import APIRouter, Depends, HTTPException
 from ai_platform.apis.agents import crud
 from ai_platform.apis.agents.crud import get_agent
@@ -301,5 +303,75 @@ async def stream_agent_response(query: str, course_id: int = None,
 
         async for chunk in agents.stream_response(query, course_id, chat_history, context=context):
             yield {"data": chunk}
+
+    return EventSourceResponse(event_generator())
+
+
+@router.get("/test_stream")
+async def stream_agent_response(query: str,
+                                course_id: int = None,
+                                history: Optional[str] = Query(None, description="JSON-encoded chat history"),
+                                db: Session = Depends(get_db),
+                                agent_id: Optional[int] = Query(None, description="ID of the agent to use")):
+    """Stream API endpoint that uses the agent_response method from agents.py"""
+
+    # Set a default agent_id if none provided
+    if not agent_id:
+        # You might want to use a specific default agent ID here
+        agent_id = 8  # Using 8 as in your test case
+
+    # Get agent from database to validate it exists
+    agent = get_agent(db, agent_id)
+    if not agent:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Agent with ID {agent_id} not found"}
+        )
+
+    # Prepare course context if course_id is provided
+    course_context = None
+    if course_id:
+        try:
+            course_week_details = get_course_weeks(db=db, course_id=course_id)
+            course_data = get_course(db=db, course_id=course_id)
+            course_context = (f"Course Details: {course_data}\n"
+                              f"Course Week Details: {course_week_details}")
+        except Exception as e:
+            print(f"Error getting course data: {e}")
+            raise HTTPException(status_code=500, detail=f"Error retrieving course data: {e}")
+
+    # Parse chat history
+    chat_history = []
+    if history:
+        try:
+            chat_history = json.loads(history)
+            if not isinstance(chat_history, list):
+                raise ValueError("History must be a list of message objects")
+        except (json.JSONDecodeError, ValueError) as e:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Invalid history format: {str(e)}"}
+            )
+
+    # Function to generate streaming events
+    async def event_generator():
+        try:
+            # Use agent_response with streaming=True instead of stream_response directly
+            async for chunk in agents.agent_response(
+                    agent_id=agent_id,
+                    user_query=query,
+                    history=chat_history,
+                    context=course_context,
+                    streaming=True
+            ):
+                # The chunk should already be JSON formatted
+                yield {"data": chunk}
+        except Exception as e:
+            error_message = f"Error generating response: {str(e)}"
+            print(error_message)
+            yield {"data": json.dumps({"type": "error", "content": error_message})}
+        finally:
+            # Always send an end message if it hasn't been sent
+            yield {"data": json.dumps({"type": "end"})}
 
     return EventSourceResponse(event_generator())

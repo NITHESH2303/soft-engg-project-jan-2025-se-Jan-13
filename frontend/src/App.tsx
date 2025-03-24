@@ -34,17 +34,18 @@ function App() {
           <Route path="/login" Component={Login} />
           <Route path="/student/performance" Component={Performance} />
 
-
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" Component={InstructorDashboard} />
+          <Route path="/admin/manage-course/:courseId" Component={ManageCourse} />
+          <Route path="/admin/customize-ai" Component={CustomizeAI} />
+          <Route path="/admin/add-content" Component={AddContent} />
 
           <Route path="/instructor/login" Component={InstructorLogin} />
           <Route path="/ta/login" Component={TALogin} />
           <Route path="/signup" Component={Signup} />
           <Route path="/chat" Component={Chat} />
           <Route path="/ta/dashboard" Component={TADashboard} />
-          <Route path="/instructor/dashboard" Component={InstructorDashboard} />
-          <Route path="/admin/manage-course/:courseId" Component={ManageCourse} />
-          <Route path="/admin/customize-ai" Component={CustomizeAI} />
-          <Route path="/admin/add-content" Component={AddContent} />
+
           <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
           <Route path="/course/:courseId/analytics" Component={CourseAnalytics} />

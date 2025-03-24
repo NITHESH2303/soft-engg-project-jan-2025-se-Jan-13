@@ -13,6 +13,7 @@ class AiAgent(Base):
     system_prompt = Column(String, nullable=True, server_default="You are helpful assistant.")
     name = Column(String, index=True)
     model_name = Column(String, default="gpt-4")
+    response_format = Column(String, server_default="text", doc="The response format of the gpt, can be json",nullable=True)
     model_type = Column(String)
     vector_index = Column(String)
     response_token_limit = Column(Integer)

@@ -6,55 +6,61 @@ import { settings } from "react-icons-kit/feather/settings";
 import { bell } from "react-icons-kit/feather/bell";
 import { edit2 } from "react-icons-kit/feather/edit2";
 import { save } from "react-icons-kit/feather/save";
-import { Link, useNavigate } from "react-router-dom";
 import { file } from 'react-icons-kit/feather/file';
+import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 interface Agent {
-  agent_id: string;
-  agent_name: string;
+  id: number;
+  name: string;
+  model_name: string;
   system_prompt: string;
-  vector_index_name: string;
-  openai_model: string;
+  model_type: string;
+  vector_index: string | null;
+  response_format: string | null;
   response_token_limit: number;
   temperature: number;
-  top_p: number;
+  description: string;
 }
 
-const mockAgents: Agent[] = [
-  {
-    agent_id: "1",
-    agent_name: "Course Assistant",
-    system_prompt: "You are a helpful course assistant.",
-    vector_index_name: "course_content_index",
-    openai_model: "gpt-4",
-    response_token_limit: 4096,
-    temperature: 0.7,
-    top_p: 1,
-  },
-  {
-    agent_id: "2",
-    agent_name: "Assignment Helper",
-    system_prompt: "You are an AI that helps with assignments.",
-    vector_index_name: "assignment_index",
-    openai_model: "gpt-4",
-    response_token_limit: 4096,
-    temperature: 0.5,
-    top_p: 0.9,
-  },
-];
+const API_BASE_URL = 'http://127.0.0.1:8000/api/agent';
 
 export default function CustomizeAI() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Simulating API call
-    const fetchAgents = async () => {
-      // In a real scenario, this would be an API call
-      setAgents(mockAgents);
-    };
+  // Fetch agents from API
+  const fetchAgents = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/agents/?skip=0&limit=100`, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      setAgents(response.data);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
 
+  // Update agent via API
+  const updateAgent = async (agent: Agent) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/agents/${agent.id}`, agent, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
     fetchAgents();
   }, []);
 
@@ -62,20 +68,22 @@ export default function CustomizeAI() {
     setEditingAgent(agent);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingAgent) {
-      // In a real scenario, this would be an API call to update the agent
-      setAgents(
-        agents.map((a) =>
-          a.agent_id === editingAgent.agent_id ? editingAgent : a
-        )
-      );
-      setEditingAgent(null);
+      try {
+        const updatedAgent = await updateAgent(editingAgent);
+        setAgents(agents.map((a) => 
+          a.id === updatedAgent.id ? updatedAgent : a
+        ));
+        setEditingAgent(null);
+      } catch (error) {
+        console.error('Failed to save agent:', error);
+      }
     }
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     if (editingAgent) {
       setEditingAgent({
@@ -110,7 +118,7 @@ export default function CustomizeAI() {
 
         <nav className="space-y-2">
           <Link
-            to="/dashboard"
+            to="/admin/dashboard"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={home} size={20} />
@@ -124,14 +132,14 @@ export default function CustomizeAI() {
             <span className="font-medium">Performance</span>
           </Link>
           <Link
-            to="/customize-ai"
+            to="/admin/customize-ai"
             className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
           >
             <Icon icon={settings} size={20} />
             <span className="font-medium">Customize AI agents</span>
           </Link>
           <Link
-            to="/content-approval"
+            to="/admin/content-approval"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={bell} size={20} />
@@ -166,15 +174,15 @@ export default function CustomizeAI() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {agents.map((agent) => (
-                <tr key={agent.agent_id}>
+                <tr key={agent.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {agent.agent_name}
+                    {agent.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {agent.vector_index_name}
+                    {agent.vector_index || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {agent.openai_model}
+                    {agent.model_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
@@ -193,7 +201,7 @@ export default function CustomizeAI() {
         {editingAgent && (
           <div className="mt-8 bg-white rounded-xl shadow-md p-6">
             <h2 className="text-2xl font-semibold mb-4">
-              Edit Agent: {editingAgent.agent_name}
+              Edit Agent: {editingAgent.name}
             </h2>
             <div className="space-y-4">
               <div>
@@ -202,8 +210,8 @@ export default function CustomizeAI() {
                 </label>
                 <input
                   type="text"
-                  name="agent_name"
-                  value={editingAgent.agent_name}
+                  name="name"
+                  value={editingAgent.name}
                   onChange={handleInputChange}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
@@ -222,24 +230,36 @@ export default function CustomizeAI() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Vector Index Name
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={editingAgent.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Vector Index
                 </label>
                 <input
                   type="text"
-                  name="vector_index_name"
-                  value={editingAgent.vector_index_name}
+                  name="vector_index"
+                  value={editingAgent.vector_index || ''}
                   onChange={handleInputChange}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  OpenAI Model
+                  Model Name
                 </label>
                 <input
                   type="text"
-                  name="openai_model"
-                  value={editingAgent.openai_model}
+                  name="model_name"
+                  value={editingAgent.model_name}
                   onChange={handleInputChange}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
@@ -255,6 +275,36 @@ export default function CustomizeAI() {
                   onChange={handleInputChange}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Temperature
+                </label>
+                <input
+                  type="number"
+                  name="temperature"
+                  value={editingAgent.temperature}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0"
+                  max="1"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Response Format
+                </label>
+                <select
+                  name="response_format"
+                  value={editingAgent.response_format || ''}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">None</option>
+                  <option value="text">Text</option>
+                  <option value="json">JSON</option>
+                </select>
               </div>
               <button
                 onClick={handleSave}

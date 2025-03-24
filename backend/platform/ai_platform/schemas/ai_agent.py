@@ -6,8 +6,10 @@ import uuid
 class AiAgentBase(BaseModel):
     name: str
     model_name: str = "gpt-4"
+    system_prompt: str
     model_type: str
-    vector_index: str
+    vector_index: str | None
+    response_format: str | None
     response_token_limit: int
     temperature: float
     description: Optional[str] = None

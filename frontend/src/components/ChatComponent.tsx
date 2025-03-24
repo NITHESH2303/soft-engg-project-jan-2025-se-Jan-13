@@ -20,7 +20,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/stream',
+  apiEndpoint = 'http://127.0.0.1:8000/api/agent/test_stream',
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,

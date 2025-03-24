@@ -1,10 +1,7 @@
 import json
 import os
 from typing import List, Dict, AsyncGenerator, Union
-
-from langchain_core.messages import SystemMessage
 from openai import OpenAI
-from ai_platform.agents.streaming_services import OpenAIStreaming
 from ai_platform.agents.tools_implemented import get_course_content
 from ai_platform.supafast.database import get_db
 from ai_platform.agents.tools import course_content_tool
@@ -12,9 +9,8 @@ from ai_platform.supafast.models.ai_agent import AiAgent
 from ai_platform.vectordb.db_pgvector import PgvectorDB
 
 
-class Agents(OpenAIStreaming):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class Agents:
+    def __init__(self):
         self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         self.db = next(get_db())
         self.agents = self._load_agents()
@@ -71,20 +67,81 @@ class Agents(OpenAIStreaming):
 
         completion = self.openai_client.chat.completions.create(**model_params)
 
+        # Track accumulated tool calls data
+        current_tool_calls = {}
+
         for chunk in completion:
+            print(f"Yielding chunk in completion", chunk)
+
+            # Handle content chunks
             if chunk.choices[0].delta.content:
                 yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
-            elif chunk.choices[0].delta.tool_calls:
-                tool_call = chunk.choices[0].delta.tool_calls[0]
-                if tool_call.function.name == "get_course_content":
-                    args = json.loads(tool_call.function.arguments)
-                    content = get_course_content(next(get_db()), **args)
-                    messages.append({
-                        "role": "tool",
-                        "content": json.dumps(content),
-                        "tool_call_id": tool_call.id
-                    })
-                    yield json.dumps({"type": "tool", "content": content})
+
+            # Handle tool calls - this is the problematic part
+            if chunk.choices[0].delta.tool_calls:
+                for tool_call_delta in chunk.choices[0].delta.tool_calls:
+                    tool_call_id = tool_call_delta.id
+
+                    # Initialize the tool call if we haven't seen it before
+                    if tool_call_id not in current_tool_calls:
+                        current_tool_calls[tool_call_id] = {
+                            "id": tool_call_id,
+                            "function": {
+                                "name": "",
+                                "arguments": ""
+                            }
+                        }
+
+                    # Update function name if present
+                    if tool_call_delta.function.name:
+                        current_tool_calls[tool_call_id]["function"]["name"] = tool_call_delta.function.name
+
+                    # Append arguments chunk if present
+                    if tool_call_delta.function.arguments:
+                        current_tool_calls[tool_call_id]["function"]["arguments"] += tool_call_delta.function.arguments
+
+                    # Check if we have a complete tool call
+                    tool_call = current_tool_calls[tool_call_id]
+                    if (tool_call["function"]["name"] == "get_course_content" and
+                            tool_call["function"]["arguments"] and
+                            tool_call["function"]["arguments"].endswith("}")):
+                        try:
+                            # Try to parse the arguments
+                            args = json.loads(tool_call["function"]["arguments"])
+                            print(f"Arguments to give function", args)
+
+                            # Get content from function
+                            content = get_course_content(next(get_db()), **args)
+                            print(f"Content got from get course content ", content)
+
+                            # Add tool response to messages
+                            messages.append({
+                                "role": "assistant",
+                                "content": None,
+                                "tool_calls": [{
+                                    "id": tool_call_id,
+                                    "type": "function",
+                                    "function": {
+                                        "name": tool_call["function"]["name"],
+                                        "arguments": tool_call["function"]["arguments"]
+                                    }
+                                }]
+                            })
+
+                            messages.append({
+                                "role": "tool",
+                                "content": json.dumps(content),
+                                "tool_call_id": tool_call_id
+                            })
+
+                            print("yielding response")
+                            yield json.dumps({"type": "tool", "content": content})
+
+                            # Reset this tool call as it's been processed
+                            current_tool_calls.pop(tool_call_id)
+                        except json.JSONDecodeError:
+                            # Arguments not complete yet, continue collecting
+                            pass
 
         yield json.dumps({"type": "end"})
 
@@ -109,7 +166,7 @@ class Agents(OpenAIStreaming):
             messages.extend(history)
         messages.append({"role": "user", "content": user_query})
 
-        is_json_response = agent.model_type == "json" or "parser" in agent.name.lower()
+        is_json_response = agent.response_format == "json" or "parser" in agent.name.lower()
 
         model_params = {
             "messages": messages,
@@ -126,23 +183,33 @@ class Agents(OpenAIStreaming):
         response = completion.choices[0].message
 
         if response.tool_calls and not is_json_response:
+            # Create a new messages array with the original messages plus the assistant's response
+            tool_messages = messages.copy()
+            tool_messages.append({
+                "role": "assistant",
+                "content": response.content,
+                "tool_calls": response.tool_calls
+            })
+
+            # Now add the tool response
             for tool_call in response.tool_calls:
                 if tool_call.function.name == "get_course_content":
                     args = json.loads(tool_call.function.arguments)
                     content = get_course_content(next(get_db()), **args)
-                    messages.append({
+                    tool_messages.append({
                         "role": "tool",
                         "content": json.dumps(content),
                         "tool_call_id": tool_call.id
                     })
-                    final_completion = self.openai_client.chat.completions.create(
-                        messages=messages,
-                        model=agent.model_name,
-                        temperature=agent.temperature,
-                        max_tokens=agent.response_token_limit
-                    )
-                    return final_completion.choices[0].message.content
-            return response.content
+
+            # Make the final call with the tool responses included
+            final_completion = self.openai_client.chat.completions.create(
+                messages=tool_messages,
+                model=agent.model_name,
+                temperature=agent.temperature,
+                max_tokens=agent.response_token_limit
+            )
+            return final_completion.choices[0].message.content
         elif is_json_response:
             return json.loads(response.content)
         return response.content
@@ -185,13 +252,42 @@ class Agents(OpenAIStreaming):
                         context = (context or "") + f"\nVector DB Context: {additional_context}"
 
         if streaming:
+            print(f"Streaming is true")
+            # For tracking tool calls
+            messages = []
+            if history:
+                for msg in history:
+                    messages.append(msg)
+
+            # Keep track of accumulated text content to send to frontend
+            accumulated_text = ""
+
             async for chunk in self.stream_response(
                     user_input=user_query,
                     agent_id=agent_id,
                     chat_history=history,
                     context=context
             ):
-                yield chunk
+                print(f"Processing chunk: {chunk}")
+                chunk_data = json.loads(chunk)
+
+                # If it's a text chunk, send it to the frontend directly
+                if chunk_data["type"] == "text":
+                    accumulated_text += chunk_data["content"]
+                    yield json.dumps({"type": "text", "content": chunk_data["content"]})
+
+                # If it's a tool response, save it but don't send to frontend
+                elif chunk_data["type"] == "tool":
+                    print("Tool response received, processing internally...")
+                    # Here we could use the content for additional processing if needed
+                    # but we don't send it to the frontend
+
+                    # If you need to generate additional streaming content based on the tool
+                    # response, you could do that here and yield those chunks
+
+                # End signal, pass it through
+                elif chunk_data["type"] == "end":
+                    yield json.dumps({"type": "end"})
         else:
             result = self._execute_agent_sync(
                 agent_id=agent_id,
