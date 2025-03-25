@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List, Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -7,8 +8,6 @@ import pdfplumber
 from io import BytesIO
 from fastapi import UploadFile, File, Form, Query
 
-from ai_platform.agents.framework_agentic import Agents
-# from ai_platform.agents.openai_agent import Agents
 from ai_platform.agents.streaming_services import OpenAIStreaming
 from starlette.responses import StreamingResponse, JSONResponse
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,6 +22,8 @@ from ai_platform.vectordb.db_pgvector import PgvectorDB
 from docx import Document
 from sse_starlette.sse import EventSourceResponse
 import json
+#from ai_platform.agents.framework_agentic import Agents
+from ai_platform.agents.openai_agent import Agents
 
 streamClient = OpenAIStreaming()
 agents = Agents()
@@ -302,6 +303,8 @@ async def stream_agent_response(query: str, course_id: int = None,
                 # Stream the response with history
 
         async for chunk in agents.stream_response(query, course_id, chat_history, context=context):
+            #simulate slow processing
+            # time.sleep(5)
             yield {"data": chunk}
 
     return EventSourceResponse(event_generator())
@@ -357,12 +360,12 @@ async def stream_agent_response(query: str,
     async def event_generator():
         try:
             # Use agent_response with streaming=True instead of stream_response directly
-            async for chunk in agents.agent_response(
+            async for chunk in agents.stream_response(
+                user_input=query,
+                    course_id=course_id,
                     agent_id=agent_id,
-                    user_query=query,
-                    history=chat_history,
+                    chat_history=chat_history,
                     context=course_context,
-                    streaming=True
             ):
                 # The chunk should already be JSON formatted
                 yield {"data": chunk}

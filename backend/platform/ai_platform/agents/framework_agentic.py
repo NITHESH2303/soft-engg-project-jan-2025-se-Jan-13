@@ -66,10 +66,11 @@ class Agents:
         }
 
         completion = self.openai_client.chat.completions.create(**model_params)
-
-        # Track accumulated tool calls data
-        current_tool_calls = {}
-
+        # For now handling single tool call
+        tool_args = ""
+        tool_name = ""
+        tool_id = ""
+        tool_call_object = None
         for chunk in completion:
             print(f"Yielding chunk in completion", chunk)
 
@@ -79,70 +80,51 @@ class Agents:
 
             # Handle tool calls - this is the problematic part
             if chunk.choices[0].delta.tool_calls:
-                for tool_call_delta in chunk.choices[0].delta.tool_calls:
-                    tool_call_id = tool_call_delta.id
+                if chunk.choices[0].delta.tool_calls[0]:
+                    if chunk.choices[0].delta.tool_calls[0].function.arguments:
+                        tool_args += chunk.choices[0].delta.tool_calls[0].function.arguments
+                        continue
+                    else:
+                        # If argument is empty then it must be first chunk so get tool id and name
+                        tool_call_object = chunk.choices[0].delta.tool_calls
+                        tool_name += chunk.choices[0].delta.tool_calls[0].function.name
+                        tool_id += chunk.choices[0].delta.tool_calls[0].id
 
-                    # Initialize the tool call if we haven't seen it before
-                    if tool_call_id not in current_tool_calls:
-                        current_tool_calls[tool_call_id] = {
-                            "id": tool_call_id,
-                            "function": {
-                                "name": "",
-                                "arguments": ""
-                            }
-                        }
+            if not chunk.choices[0].delta.tool_calls and chunk.choices[0].finish_reason == "tool_calls":
+                #If finish reason is tool calls then break this and call the tool and start another streaming
+                break
 
-                    # Update function name if present
-                    if tool_call_delta.function.name:
-                        current_tool_calls[tool_call_id]["function"]["name"] = tool_call_delta.function.name
-
-                    # Append arguments chunk if present
-                    if tool_call_delta.function.arguments:
-                        current_tool_calls[tool_call_id]["function"]["arguments"] += tool_call_delta.function.arguments
-
-                    # Check if we have a complete tool call
-                    tool_call = current_tool_calls[tool_call_id]
-                    if (tool_call["function"]["name"] == "get_course_content" and
-                            tool_call["function"]["arguments"] and
-                            tool_call["function"]["arguments"].endswith("}")):
-                        try:
-                            # Try to parse the arguments
-                            args = json.loads(tool_call["function"]["arguments"])
-                            print(f"Arguments to give function", args)
-
-                            # Get content from function
-                            content = get_course_content(next(get_db()), **args)
-                            print(f"Content got from get course content ", content)
-
-                            # Add tool response to messages
-                            messages.append({
-                                "role": "assistant",
-                                "content": None,
-                                "tool_calls": [{
-                                    "id": tool_call_id,
-                                    "type": "function",
-                                    "function": {
-                                        "name": tool_call["function"]["name"],
-                                        "arguments": tool_call["function"]["arguments"]
-                                    }
-                                }]
-                            })
-
-                            messages.append({
-                                "role": "tool",
-                                "content": json.dumps(content),
-                                "tool_call_id": tool_call_id
-                            })
-
-                            print("yielding response")
-                            yield json.dumps({"type": "tool", "content": content})
-
-                            # Reset this tool call as it's been processed
-                            current_tool_calls.pop(tool_call_id)
-                        except json.JSONDecodeError:
-                            # Arguments not complete yet, continue collecting
-                            pass
-
+        # Now if the loop breaks using tool call, then call the tool and yield the final chunks
+        # Handle tool calls
+        if tool_name == "get_course_content":
+            args = json.loads(tool_args)
+            print(f"Tool call detected: get_course_content with args {args}")
+            content = get_course_content(next(get_db()), **args)
+            print(f"Response from get_course_content: {content}")
+            messages.append({
+                "role": "assistant",
+                "content": None,
+                "tool_calls": tool_call_object
+            })
+            messages.append({
+                "role": "tool",
+                "content": json.dumps(content),
+                "tool_call_id": tool_id
+            })
+            # Step 3: Stream the final response
+            stream = self.openai_client.chat.completions.create(
+                messages=messages,
+                model=agent.model_name,
+                stream=True
+            )
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
+        # Finally reset the tool metadata and yield end
+        tool_id = ""
+        tool_name = ""
+        tool_args = ""
+        tool_call_object = None
         yield json.dumps({"type": "end"})
 
     def _execute_agent_sync(
@@ -276,16 +258,6 @@ class Agents:
                     accumulated_text += chunk_data["content"]
                     yield json.dumps({"type": "text", "content": chunk_data["content"]})
 
-                # If it's a tool response, save it but don't send to frontend
-                elif chunk_data["type"] == "tool":
-                    print("Tool response received, processing internally...")
-                    # Here we could use the content for additional processing if needed
-                    # but we don't send it to the frontend
-
-                    # If you need to generate additional streaming content based on the tool
-                    # response, you could do that here and yield those chunks
-
-                # End signal, pass it through
                 elif chunk_data["type"] == "end":
                     yield json.dumps({"type": "end"})
         else:

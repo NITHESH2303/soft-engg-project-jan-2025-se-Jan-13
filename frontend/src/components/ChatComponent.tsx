@@ -20,7 +20,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/test_stream',
+  apiEndpoint = 'http://127.0.0.1:8000/api/agent/stream',
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,
@@ -36,6 +36,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const fullResponseRef = useRef<string>('');
+  const chunkQueueRef = useRef<string[]>([]);
+  const isProcessingRef = useRef(false);
+
+  const CHUNK_DELAY = 100; // Delay between chunks in milliseconds (adjust as needed)
 
   const getCourseIdFromUrl = () => {
     const pathParts = window.location.pathname.split('/');
@@ -43,13 +47,28 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     return courseIndex !== -1 && pathParts[courseIndex + 1] ? pathParts[courseIndex + 1] : null;
   };
 
-  // Function to prepare chat history for API
   const prepareHistoryForApi = (messageHistory: Message[]) => {
-    // Filter out only essential data and remove timestamps
     return messageHistory.map(({ role, content }) => ({
       role,
       content
     }));
+  };
+
+  const processChunkQueue = async () => {
+    if (isProcessingRef.current || chunkQueueRef.current.length === 0) return;
+    
+    isProcessingRef.current = true;
+    
+    while (chunkQueueRef.current.length > 0) {
+      const chunk = chunkQueueRef.current.shift();
+      if (chunk) {
+        fullResponseRef.current += chunk;
+        setCurrentResponse(fullResponseRef.current);
+        await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+      }
+    }
+    
+    isProcessingRef.current = false;
   };
 
   const handleStream = (query: string, courseId: string | null) => {
@@ -57,6 +76,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     setError(null);
     setCurrentResponse('');
     fullResponseRef.current = '';
+    chunkQueueRef.current = [];
 
     const url = new URL(apiEndpoint);
     url.searchParams.append('query', query);
@@ -64,8 +84,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       url.searchParams.append('course_id', courseId);
     }
     
-    // Add chat history to the request
-    // Exclude the last user message as it's already being sent as 'query'
     const historyToSend = history.length > 0 ? prepareHistoryForApi(history) : [];
     const historyJson = JSON.stringify(historyToSend);
     url.searchParams.append('history', historyJson);
@@ -75,34 +93,39 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
     source.onmessage = (event) => {
       const chunk = JSON.parse(event.data);
-      console.log(chunk);
       
       if (chunk.type === 'text') {
-        fullResponseRef.current += chunk.content;
-        setCurrentResponse(fullResponseRef.current);
+        chunkQueueRef.current.push(chunk.content);
+        processChunkQueue();
       } else if (chunk.type === 'end') {
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: fullResponseRef.current,
-          timestamp: new Date(),
+        // Wait for all chunks to process before finalizing
+        const finalizeMessage = async () => {
+          await processChunkQueue();
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: fullResponseRef.current,
+            timestamp: new Date(),
+          };
+          
+          setHistory((prevHistory) => {
+            const newHistory = [...prevHistory, assistantMessage];
+            if (onHistoryChange) {
+              onHistoryChange(newHistory);
+            }
+            return newHistory;
+          });
+          
+          if (onMessageAdded) {
+            onMessageAdded(assistantMessage);
+          }
+          
+          source.close();
+          setIsLoading(false);
+          setCurrentResponse('');
+          fullResponseRef.current = '';
         };
         
-        setHistory((prevHistory) => {
-          const newHistory = [...prevHistory, assistantMessage];
-          if (onHistoryChange) {
-            onHistoryChange(newHistory);
-          }
-          return newHistory;
-        });
-        
-        if (onMessageAdded) {
-          onMessageAdded(assistantMessage);
-        }
-        
-        source.close();
-        setIsLoading(false);
-        setCurrentResponse('');
-        fullResponseRef.current = '';
+        finalizeMessage();
       } else if (chunk.type === 'error') {
         setError(chunk.content);
         source.close();
