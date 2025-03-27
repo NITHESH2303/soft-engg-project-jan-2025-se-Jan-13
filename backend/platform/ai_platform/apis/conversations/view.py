@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import uuid
@@ -23,12 +25,19 @@ def get_conversation(conversation_id: uuid.UUID, db: Session = Depends(get_db)):
     return convo
 
 
-@router.get("/user/{user_id}", response_model=ConversationResponse)
+@router.get("/user/{user_id}", response_model=List[ConversationResponse])
 def get_conversation(user_id: int, db: Session = Depends(get_db)):
     convo = crud.get_user_conversations(db, user_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return convo
+    return [{
+        "id": conv.id,
+        "user_id": conv.user_id,
+        "conversations": conv.conversations,
+        "title": conv.title,
+        "created_at": conv.created_at,
+        "modified_at": conv.modified_at
+    } for conv in convo]
 
 
 @router.put("/{conversation_id}", response_model=ConversationResponse)

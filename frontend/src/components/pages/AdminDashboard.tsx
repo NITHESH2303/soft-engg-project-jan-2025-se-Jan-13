@@ -11,7 +11,7 @@ import Chat from './Chat.tsx';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { fetchCoursesAdmin } from '../../services/admin.ts';
-
+import { logOut } from 'react-icons-kit/feather/logOut';
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 interface Course {
@@ -27,6 +27,10 @@ export default function AdminDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    // Add any logout logic here (e.g., clearing local storage, calling an API)
+    navigate('/admin/login'); // Navigate to login page after logout
+  };
   useEffect(() => {
     // Check if the user is logged in
     const accessToken = localStorage.getItem('access_token');
@@ -117,6 +121,14 @@ export default function AdminDashboard() {
             <span className="font-medium">Course Content Approval (2)</span>
           </Link> */}
         </nav>
+              {/* Logout Button */}
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center justify-center space-x-3 p-3 mt-6 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                <Icon icon={logOut} size={20} />
+                <span className="font-medium">Logout</span>
+              </button>
       </div>
 
       {/* Main Content */}

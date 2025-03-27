@@ -19,7 +19,7 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
       
       // Save the token in local storage
       localStorage.setItem('access_token', response.access_token);
-
+      localStorage.setItem('sub', response.sub);
       // Call the onLoginSuccess callback to redirect to the dashboard
       onLoginSuccess();
     } catch (err) {

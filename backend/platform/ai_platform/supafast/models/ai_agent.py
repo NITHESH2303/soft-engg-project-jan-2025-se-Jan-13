@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON, UUID
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON, UUID, DateTime, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 import uuid
@@ -13,7 +15,8 @@ class AiAgent(Base):
     system_prompt = Column(String, nullable=True, server_default="You are helpful assistant.")
     name = Column(String, index=True)
     model_name = Column(String, default="gpt-4")
-    response_format = Column(String, server_default="text", doc="The response format of the gpt, can be json",nullable=True)
+    response_format = Column(String, server_default="text", doc="The response format of the gpt, can be json",
+                             nullable=True)
     model_type = Column(String)
     vector_index = Column(String)
     response_token_limit = Column(Integer)
@@ -29,7 +32,10 @@ class Conversation(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     agent_id = Column(Integer, ForeignKey("ai_agents.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String, nullable=True, server_default="No title.")
     conversations = Column(JSONB)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    modified_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     agent = relationship("AiAgent", back_populates="conversations")
     user = relationship("User", back_populates="conversations")

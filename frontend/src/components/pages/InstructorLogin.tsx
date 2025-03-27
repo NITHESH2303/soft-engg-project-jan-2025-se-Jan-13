@@ -6,8 +6,9 @@ export default function InstructorLogin() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    navigate('/instructor/dashboard'); // Redirect to instructor dashboard after successful login
+    navigate('/admin/dashboard'); // Redirect to instructor dashboard after successful login
   };
+  
 
   return (
     <div className='min-h-screen w-full bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900'>

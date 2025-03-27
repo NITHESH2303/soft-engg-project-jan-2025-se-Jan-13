@@ -24,7 +24,7 @@ router = APIRouter()
 async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     """
     **Register a new user.**
-    
+
     This endpoint allows a new user to sign up by providing a username, email, password, and role.
 
     **Args:**
@@ -70,7 +70,7 @@ async def login(
 ):
     """
     **Authenticate a user and issue a JWT access token.**
-    
+
     This endpoint verifies the provided username and password. If valid, it returns an access token.
 
     **Args:**

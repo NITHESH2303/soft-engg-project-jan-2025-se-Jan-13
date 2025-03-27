@@ -105,7 +105,7 @@ async def test_login_failure(mock_db, mock_authenticate_user):
 # Helper to create a valid token
 def create_test_token(role):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    return create_access_token(data={"sub": "testuser", "role": role}, expires_delta=access_token_expires)
+    return create_access_token(data={"sub": "pankaj", "role": role}, expires_delta=access_token_expires)
 
 
 # Test student dashboard - authorized

@@ -17,8 +17,8 @@ def get_conversation(db: Session, conversation_id: uuid.UUID):
 
 
 def get_user_conversations(db: Session, user_id: int):
-    return db.query(Conversation).filter(Conversation.user_id == user_id).first()
-
+    # TODO: Implement pagination in this
+    return db.query(Conversation).filter(Conversation.user_id == user_id).all()
 
 def update_conversation(db: Session, conversation_id: uuid.UUID, update_data: ConversationUpdate):
     db_convo = get_conversation(db, conversation_id)

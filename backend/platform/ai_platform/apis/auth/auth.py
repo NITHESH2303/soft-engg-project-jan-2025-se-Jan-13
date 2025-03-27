@@ -26,6 +26,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 class Token(BaseModel):
     access_token: str
     token_type: str
+    sub: str
+    role: str
 
 
 # Token data model

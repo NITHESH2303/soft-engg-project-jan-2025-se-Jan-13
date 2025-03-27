@@ -13,6 +13,13 @@ interface Message {
   timestamp?: Date;
 }
 
+interface ConversationMetadata {
+  conversationId: string | null;
+  title: string | null;
+  createdAt: string | null;
+  modifiedAt: string | null;
+}
+
 interface ChatComponentProps {
   apiEndpoint?: string;
   title?: string;
@@ -20,6 +27,8 @@ interface ChatComponentProps {
   onMessageAdded?: (message: Message) => void;
   className?: string;
   onHistoryChange?: (history: Message[]) => void;
+  onMetadataChange?: (metadata: ConversationMetadata) => void;
+  conversationId?: string | null;
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
@@ -29,6 +38,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   onMessageAdded,
   className = '',
   onHistoryChange,
+  onMetadataChange,
+  conversationId,
 }) => {
   const [history, setHistory] = useState<Message[]>(initialHistory);
   const [input, setInput] = useState('');
@@ -38,6 +49,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    setHistory(initialHistory);
+  }, [initialHistory]);
 
   const getCourseIdFromUrl = () => {
     const pathParts = window.location.pathname.split('/');
@@ -59,12 +74,21 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
     const url = new URL(apiEndpoint);
     url.searchParams.append('query', query);
-    url.searchParams.append('user_id', '1');
+    if (localStorage
+      .getItem("sub")) {
+    const userId = localStorage.getItem("sub");
+    if (userId) {
+      url.searchParams.append('user_id', userId);
+    }
+       }
     if (courseId) {
       url.searchParams.append('course_id', courseId);
     }
+    if (conversationId) {
+      url.searchParams.append('conversation_id', conversationId);
+    }
     
-    const historyToSend = history.length > 0 ? prepareHistoryForApi(history) : [];
+    const historyToSend = prepareHistoryForApi(history);
     const historyJson = JSON.stringify(historyToSend);
     url.searchParams.append('history', historyJson);
 
@@ -79,6 +103,16 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
       if (chunk.type === 'text') {
         fullResponse += chunk.content;
         setCurrentResponse(fullResponse);
+      } else if (chunk.type === 'metadata') {
+        const newMetadata = {
+          conversationId: chunk.conversation_id,
+          title: chunk.title,
+          createdAt: chunk.created_at,
+          modifiedAt: chunk.modified_at,
+        };
+        if (onMetadataChange) {
+          onMetadataChange(newMetadata);
+        }
       } else if (chunk.type === 'end') {
         const assistantMessage: Message = {
           role: 'assistant',
@@ -126,25 +160,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, currentResponse]);
 
-  useEffect(() => {
-    if (history.length === 0) {
-      setTimeout(() => {
-        setHistory([
-          {
-            role: 'assistant',
-            content: "👋 Hi there! I'm your AI assistant for this course. How can I help you today?",
-            timestamp: new Date(),
-          },
-        ]);
-      }, 500);
-    }
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -178,7 +193,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Markdown components with custom styling
   const markdownComponents = {
     h1: ({ children }: any) => <h1 className="text-2xl font-bold mt-4 mb-2">{children}</h1>,
     h2: ({ children }: any) => <h2 className="text-xl font-bold mt-3 mb-2">{children}</h2>,

@@ -55,3 +55,7 @@ class AssignmentSubmissionCreate(BaseModel):
     student_id: int
     assignment_type: AssignmentType
     submission_content: Optional[str] = None  # Could be text, link, or file reference
+
+
+class StudentProfileCreate:
+    pass

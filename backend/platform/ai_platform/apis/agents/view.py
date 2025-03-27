@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+from datetime import datetime
 from typing import List, Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -322,7 +323,8 @@ async def stream_agent_response(
         conversation_id: Optional[uuid.UUID] = Query(None, description="ID of existing conversation"),
         db: Session = Depends(get_db),
         agent_id: Optional[int] = Query(None, description="ID of the agent to use"),
-        user_id: int = Query(..., description="ID of the authenticated user")
+        user_id: int = Query(..., description="ID of the authenticated user"),
+        title: Optional[str] = Query(None, description="Title for new conversation")
 ):
     """Stream API endpoint that uses the agent_response method from agents.py and saves conversations"""
 
@@ -362,12 +364,16 @@ async def stream_agent_response(
 
     # Handle conversation creation or retrieval
     current_conversation_id = conversation_id
-    print(f"Chat history got from UI", chat_history)
     if len(chat_history) == 1 and not conversation_id:  # New conversation # if only two messages, it means new chat
+        # Use provided title, first user message, or timestamp as fallback
+        first_message = query[:50] if query else "New Chat"  # Truncate to 50 chars
+        convo_title = title or first_message or f"Chat {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
         convo_create = ConversationCreate(
             agent_id=agent_id,
             user_id=user_id,
-            conversations=chat_history
+            conversations=chat_history,
+            title=convo_title
         )
         current_conversation_id = create_conversation(db, convo_create)
     elif conversation_id:  # Existing conversation
@@ -399,6 +405,8 @@ async def stream_agent_response(
                     chunk_data = json.loads(chunk)
                     if chunk_data.get("type") == "text":
                         full_response += chunk_data.get("content", "")
+                    elif chunk_data.get("type") == "end":
+                        continue
                 except json.JSONDecodeError:
                     full_response += chunk  # Fallback if not JSON
 
@@ -409,15 +417,21 @@ async def stream_agent_response(
                 {"role": "user", "content": query},
                 {"role": "assistant", "content": full_response}
             ]
-            update_data = ConversationUpdate(conversations=updated_history)
-            update_conversation(db, current_conversation_id, update_data)
-
+            update_data = ConversationUpdate(
+                conversations=updated_history,
+                modified_at=datetime.now()
+            )
+            updated_conversation = update_conversation(db, current_conversation_id, update_data)
+            print("Updated history")
             # Include conversation_id in the final message
+            # Include conversation metadata in the final message
             yield {"data": json.dumps({
                 "type": "metadata",
-                "conversation_id": str(current_conversation_id)
+                "conversation_id": str(current_conversation_id),
+                "title": updated_conversation.title,
+                "created_at": updated_conversation.created_at.isoformat(),
+                "modified_at": updated_conversation.modified_at.isoformat()
             })}
-
         except Exception as e:
             error_message = f"Error generating response: {str(e)}"
             print(error_message)
