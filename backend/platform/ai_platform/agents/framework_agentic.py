@@ -72,8 +72,6 @@ class Agents:
         tool_id = ""
         tool_call_object = None
         for chunk in completion:
-            print(f"Yielding chunk in completion", chunk)
-
             # Handle content chunks
             if chunk.choices[0].delta.content:
                 yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
@@ -100,7 +98,6 @@ class Agents:
             args = json.loads(tool_args)
             print(f"Tool call detected: get_course_content with args {args}")
             content = get_course_content(next(get_db()), **args)
-            print(f"Response from get_course_content: {content}")
             messages.append({
                 "role": "assistant",
                 "content": None,
@@ -234,7 +231,6 @@ class Agents:
                         context = (context or "") + f"\nVector DB Context: {additional_context}"
 
         if streaming:
-            print(f"Streaming is true")
             # For tracking tool calls
             messages = []
             if history:
@@ -250,7 +246,6 @@ class Agents:
                     chat_history=history,
                     context=context
             ):
-                print(f"Processing chunk: {chunk}")
                 chunk_data = json.loads(chunk)
 
                 # If it's a text chunk, send it to the frontend directly

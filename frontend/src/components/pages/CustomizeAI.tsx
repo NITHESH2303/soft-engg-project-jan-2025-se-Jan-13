@@ -101,15 +101,15 @@ export default function CustomizeAI() {
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-lg p-6">
-        <div className="flex flex-col items-center mb-8">
+      <div className="flex flex-col items-center mb-8">
           <img
             src="/iitm_avatar.png"
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />
-          <h2 className="text-xl font-bold">Course Instructor</h2>
-          <Link
-            to="/profile"
+          <h2 className="text-xl font-bold">Admin</h2>
+          <Link 
+            to="/admin/profile" 
             className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
           >
             View Profile
@@ -117,34 +117,34 @@ export default function CustomizeAI() {
         </div>
 
         <nav className="space-y-2">
-          <Link
-            to="/admin/dashboard"
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
+          <Link 
+            to="/admin/dashboard" 
+            className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
           >
             <Icon icon={home} size={20} />
             <span className="font-medium">Home</span>
           </Link>
-          <Link
-            to="/performance"
+          <Link 
+            to="/admin/students" 
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={activity} size={20} />
-            <span className="font-medium">Performance</span>
+            <span className="font-medium">Students</span>
           </Link>
-          <Link
-            to="/admin/customize-ai"
-            className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
+          <Link 
+            to="/admin/customize-ai" 
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={settings} size={20} />
             <span className="font-medium">Customize AI agents</span>
           </Link>
-          <Link
-            to="/admin/content-approval"
+          {/* <Link 
+            to="/admin/content-approval" 
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={bell} size={20} />
             <span className="font-medium">Course Content Approval (2)</span>
-          </Link>
+          </Link> */}
         </nav>
       </div>
 

@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from ai_platform.apis.auth.auth import get_current_user
-from ai_platform.schemas.courses import CourseResponse, DeadlineResponse, CourseRegistrationRequest
+from ai_platform.schemas.courses import CourseResponse, CourseRegistrationRequest
 from ai_platform.schemas.weekwise_content import CourseContentResponse, GradedAssignmentResponse, \
     PracticeAssignmentResponse, VideoLectureResponse, WeekContentResponse
 from ai_platform.supafast.database import get_db
@@ -11,7 +12,7 @@ from ai_platform.supafast.models.courses import Course, Assignment, Deadline
 from ai_platform.supafast.models.users import User, Student
 from ai_platform.supafast.models.weekwise_content import GradedAssignment, PracticeAssignment, VideoLecture, \
     WeekwiseContent
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -133,54 +134,120 @@ async def get_course_content(
 
 
 # Fetch deadlines for a student
+# Assuming these are your response models
+class DeadlineResponse(BaseModel):
+    id: int
+    course_id: int
+    assignment_no: Optional[int] = None
+    deadline: str
+    is_passed: bool
+    assignment_type: str
+    title: Optional[str] = None
+    course_title: str
+
+    class Config:
+        # This allows the model to work with orm_mode (for SQLAlchemy)
+        from_attributes = True
+
+
 @router.get("/deadlines", response_model=List[DeadlineResponse])
 async def get_student_deadlines(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
     """
-    **Fetch assignment deadlines for a student.**
-    
-    Retrieves upcoming assignment deadlines along with course details.
+    Fetch upcoming assignment deadlines for a student.
 
-    **Args:**
+    Args:
         current_user (User): The authenticated student.
         db (Session): Database session.
 
-    **Returns:**
-        List[DeadlineResponse]: List of assignment deadlines.
+    Returns:
+        List[DeadlineResponse]: List of upcoming assignment deadlines.
 
-    **Raises:**
+    Raises:
         HTTPException: If the user is not a student.
     """
-
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can access this endpoint")
 
-    # Fetch deadlines for the student's assignments with course name
-    deadlines = db.query(
-        Deadline.id,
-        Deadline.course_id,
-        Deadline.assignment_no,
-        Deadline.deadline,
-        Deadline.status,
-        Course.title.label("course_title")  # Include course title
-    ).select_from(Deadline).join(Assignment,
-                                 Deadline.assignment_id == Assignment.id).join(Course,
-                                                                               Assignment.course_id == Course.id).filter(
-        Assignment.student_id == current_user.id).all()
+    # Get current timestamp in UTC
+    current_time = datetime.now(timezone.utc)
 
-    # Convert the result to a list of dictionaries
-    result = [
-        {
+    # Process Graded Assignments
+    graded_deadlines = db.query(
+        GradedAssignment.id,
+        GradedAssignment.course_id,
+        GradedAssignment.assignment_no,
+        GradedAssignment.deadline,
+        GradedAssignment.title,
+        Course.title.label("course_title")
+    ).join(Course, GradedAssignment.course_id == Course.id).filter(
+        # Only fetch deadlines that are in the future
+        GradedAssignment.deadline >= current_time.isoformat()
+    ).all()
+
+    # Process Practice Assignments
+    practice_deadlines = db.query(
+        PracticeAssignment.id,
+        PracticeAssignment.course_id,
+        PracticeAssignment.assignment_no,
+        PracticeAssignment.deadline,
+        PracticeAssignment.title,
+        Course.title.label("course_title")
+    ).join(Course, PracticeAssignment.course_id == Course.id).filter(
+        # Only fetch deadlines that are in the future
+        PracticeAssignment.deadline >= current_time.isoformat()
+    ).all()
+
+    # Combine and process deadlines
+    result = []
+
+    # Process Graded Assignments
+    for deadline in graded_deadlines:
+        try:
+            # Try parsing with timezone
+            deadline_time = datetime.fromisoformat(deadline.deadline).replace(tzinfo=timezone.utc)
+        except ValueError:
+            # Fallback: parse without timezone and assume UTC
+            deadline_time = datetime.fromisoformat(deadline.deadline)
+            if deadline_time.tzinfo is None:
+                deadline_time = deadline_time.replace(tzinfo=timezone.utc)
+
+        result.append({
             "id": deadline.id,
             "course_id": deadline.course_id,
             "assignment_no": deadline.assignment_no,
             "deadline": deadline.deadline,
-            "status": deadline.status,
-            "course_title": deadline.course_title  # Include course title in the response
-        }
-        for deadline in deadlines
-    ]
+            "is_passed": False,  # Always False since we're only fetching future deadlines
+            "assignment_type": "graded",
+            "title": deadline.title,
+            "course_title": deadline.course_title
+        })
+
+    # Process Practice Assignments
+    for deadline in practice_deadlines:
+        try:
+            # Try parsing with timezone
+            deadline_time = datetime.fromisoformat(deadline.deadline).replace(tzinfo=timezone.utc)
+        except ValueError:
+            # Fallback: parse without timezone and assume UTC
+            deadline_time = datetime.fromisoformat(deadline.deadline)
+            if deadline_time.tzinfo is None:
+                deadline_time = deadline_time.replace(tzinfo=timezone.utc)
+
+        result.append({
+            "id": deadline.id,
+            "course_id": deadline.course_id,
+            "assignment_no": deadline.assignment_no,
+            "deadline": deadline.deadline,
+            "is_passed": False,  # Always False since we're only fetching future deadlines
+            "assignment_type": "practice",
+            "title": deadline.title,
+            "course_title": deadline.course_title
+        })
+
+    # Sort deadlines by deadline date
+    result.sort(key=lambda x: x['deadline'])
 
     return result

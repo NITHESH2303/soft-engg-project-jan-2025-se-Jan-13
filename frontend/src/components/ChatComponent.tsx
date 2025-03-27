@@ -3,6 +3,9 @@ import { Icon } from 'react-icons-kit';
 import { send } from 'react-icons-kit/feather/send';
 import { paperclip } from 'react-icons-kit/feather/paperclip';
 import { mic } from 'react-icons-kit/feather/mic';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -20,7 +23,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/stream',
+  apiEndpoint = 'http://127.0.0.1:8000/api/agent/host_agent',
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,
@@ -35,11 +38,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const fullResponseRef = useRef<string>('');
-  const chunkQueueRef = useRef<string[]>([]);
-  const isProcessingRef = useRef(false);
-
-  const CHUNK_DELAY = 100; // Delay between chunks in milliseconds (adjust as needed)
 
   const getCourseIdFromUrl = () => {
     const pathParts = window.location.pathname.split('/');
@@ -54,32 +52,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     }));
   };
 
-  const processChunkQueue = async () => {
-    if (isProcessingRef.current || chunkQueueRef.current.length === 0) return;
-    
-    isProcessingRef.current = true;
-    
-    while (chunkQueueRef.current.length > 0) {
-      const chunk = chunkQueueRef.current.shift();
-      if (chunk) {
-        fullResponseRef.current += chunk;
-        setCurrentResponse(fullResponseRef.current);
-        await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
-      }
-    }
-    
-    isProcessingRef.current = false;
-  };
-
   const handleStream = (query: string, courseId: string | null) => {
     setIsLoading(true);
     setError(null);
     setCurrentResponse('');
-    fullResponseRef.current = '';
-    chunkQueueRef.current = [];
 
     const url = new URL(apiEndpoint);
     url.searchParams.append('query', query);
+    url.searchParams.append('user_id', '1');
     if (courseId) {
       url.searchParams.append('course_id', courseId);
     }
@@ -91,41 +71,36 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     const source = new EventSource(url.toString());
     eventSourceRef.current = source;
 
+    let fullResponse = '';
+
     source.onmessage = (event) => {
       const chunk = JSON.parse(event.data);
       
       if (chunk.type === 'text') {
-        chunkQueueRef.current.push(chunk.content);
-        processChunkQueue();
+        fullResponse += chunk.content;
+        setCurrentResponse(fullResponse);
       } else if (chunk.type === 'end') {
-        // Wait for all chunks to process before finalizing
-        const finalizeMessage = async () => {
-          await processChunkQueue();
-          const assistantMessage: Message = {
-            role: 'assistant',
-            content: fullResponseRef.current,
-            timestamp: new Date(),
-          };
-          
-          setHistory((prevHistory) => {
-            const newHistory = [...prevHistory, assistantMessage];
-            if (onHistoryChange) {
-              onHistoryChange(newHistory);
-            }
-            return newHistory;
-          });
-          
-          if (onMessageAdded) {
-            onMessageAdded(assistantMessage);
-          }
-          
-          source.close();
-          setIsLoading(false);
-          setCurrentResponse('');
-          fullResponseRef.current = '';
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: fullResponse,
+          timestamp: new Date(),
         };
         
-        finalizeMessage();
+        setHistory((prevHistory) => {
+          const newHistory = [...prevHistory, assistantMessage];
+          if (onHistoryChange) {
+            onHistoryChange(newHistory);
+          }
+          return newHistory;
+        });
+        
+        if (onMessageAdded) {
+          onMessageAdded(assistantMessage);
+        }
+        
+        source.close();
+        setIsLoading(false);
+        setCurrentResponse('');
       } else if (chunk.type === 'error') {
         setError(chunk.content);
         source.close();
@@ -203,6 +178,35 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Markdown components with custom styling
+  const markdownComponents = {
+    h1: ({ children }: any) => <h1 className="text-2xl font-bold mt-4 mb-2">{children}</h1>,
+    h2: ({ children }: any) => <h2 className="text-xl font-bold mt-3 mb-2">{children}</h2>,
+    h3: ({ children }: any) => <h3 className="text-lg font-semibold mt-2 mb-1">{children}</h3>,
+    p: ({ children }: any) => <p className="mb-2">{children}</p>,
+    ul: ({ children }: any) => <ul className="list-disc pl-6 mb-2">{children}</ul>,
+    ol: ({ children }: any) => <ol className="list-decimal pl-6 mb-2">{children}</ol>,
+    li: ({ children }: any) => <li className="mb-1">{children}</li>,
+    code: ({ inline, children }: any) => 
+      inline ? (
+        <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm">{children}</code>
+      ) : (
+        <pre className="bg-gray-800/50 p-3 rounded-lg my-2 overflow-x-auto">
+          <code>{children}</code>
+        </pre>
+      ),
+    blockquote: ({ children }: any) => (
+      <blockquote className="border-l-4 border-gray-500 pl-4 my-2 italic text-gray-300">
+        {children}
+      </blockquote>
+    ),
+    a: ({ href, children }: any) => (
+      <a href={href} className="text-purple-400 hover:underline" target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ),
+  };
+
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
@@ -216,7 +220,17 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
                   message.role === 'user' ? 'bg-purple-600 text-white ml-auto' : 'bg-white/10 text-white'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                {message.role === 'assistant' ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                ) : (
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                )}
                 <div
                   className={`text-xs mt-1 ${message.role === 'user' ? 'text-purple-200' : 'text-gray-400'}`}
                 >
@@ -229,24 +243,30 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           {isLoading && (
             <div className="flex justify-start">
               <div className="max-w-[80%] p-4 rounded-2xl bg-white/10 text-white">
-                <div className="whitespace-pre-wrap">
-                  {currentResponse || (
-                    <div className="flex space-x-2">
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0ms' }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '150ms' }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '300ms' }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
+                {currentResponse ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {currentResponse}
+                  </ReactMarkdown>
+                ) : (
+                  <div className="flex space-x-2">
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    ></div>
+                  </div>
+                )}
               </div>
             </div>
           )}

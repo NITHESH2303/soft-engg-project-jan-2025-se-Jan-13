@@ -8,7 +8,6 @@ import Profile from './components/pages/Profile'
 import InstructorLogin from "./components/pages/InstructorLogin";
 import TALogin from "./components/pages/TaLogin";
 import TADashboard from "./components/pages/TaDashboard";
-import InstructorDashboard from "./components/pages/InstructorDashboard";
 import CustomizeAI from "./components/pages/CustomizeAI";
 import AddContent from "./components/AiAgent/AddContent";
 import ManageCourse from "./components/ManageCourse/ManageCourseTA";
@@ -16,6 +15,7 @@ import StudentDashboard from "./components/Student/StudentDashboard";
 import Login from "./components/Student/Login";
 import StudentCoursePage from "./components/Student/StudentCoursePage";
 import WeeklyCourseContent from "./components/WeeklyCourseContent/WeeklyCourseContent";
+import AdminDashboard from "./components/pages/AdminDashboard";
 
 function App() {
   return (
@@ -31,24 +31,28 @@ function App() {
           <Route path="/student/course/:courseId" Component={WeeklyCourseContent} />
           <Route path="/student/profile" Component={Profile} />
           <Route path="/" Component={Login} />
+          <Route path="/signup" Component={Signup} />
           <Route path="/login" Component={Login} />
           <Route path="/student/performance" Component={Performance} />
 
+          {/* TA Routes */}``
+          <Route path="/ta/dashboard" Component={TADashboard} />
+          <Route path="/ta/login" Component={TALogin} />
+          <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
+
+
           {/* Admin Routes */}
-          <Route path="/admin/dashboard" Component={InstructorDashboard} />
+          <Route path="/admin/dashboard" Component={AdminDashboard} />
           <Route path="/admin/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/admin/customize-ai" Component={CustomizeAI} />
           <Route path="/admin/add-content" Component={AddContent} />
+          <Route path="/admin/login" Component={InstructorLogin} />
 
-          <Route path="/instructor/login" Component={InstructorLogin} />
-          <Route path="/ta/login" Component={TALogin} />
-          <Route path="/signup" Component={Signup} />
+          {/* Common Routes */}
           <Route path="/chat" Component={Chat} />
-          <Route path="/ta/dashboard" Component={TADashboard} />
-
-          <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
           <Route path="/course/:courseId/assignment/:weekId" Component={CourseAssignment} />
           <Route path="/course/:courseId/analytics" Component={CourseAnalytics} />
+          
         </Routes>
       </BrowserRouter>
     </>

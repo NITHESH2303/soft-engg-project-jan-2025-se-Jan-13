@@ -25,7 +25,7 @@ def update_conversation(db: Session, conversation_id: uuid.UUID, update_data: Co
     if not db_convo:
         return None  # Error: Not Found
 
-    db_convo.conversation = update_data.conversation  # Update JSONB data
+    db_convo.conversations = update_data.conversations  # Update JSONB data
     db.commit()
     db.refresh(db_convo)
     return db_convo
