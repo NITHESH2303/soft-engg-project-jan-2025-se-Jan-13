@@ -5,13 +5,13 @@ import { activity } from 'react-icons-kit/feather/activity';
 import { messageCircle } from 'react-icons-kit/feather/messageCircle';
 import { settings } from 'react-icons-kit/feather/settings';
 import { bell } from 'react-icons-kit/feather/bell';
-import { x } from 'react-icons-kit/feather/x';
 import { Link, useNavigate } from 'react-router-dom';
-import Chat from './Chat.tsx';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { fetchCoursesAdmin } from '../../services/admin.ts';
 import { logOut } from 'react-icons-kit/feather/logOut';
+import ChatOverlay from '../ui/ChatOverlay';
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 interface Course {
@@ -113,13 +113,6 @@ export default function AdminDashboard() {
             <Icon icon={settings} size={20} />
             <span className="font-medium">Customize AI agents</span>
           </Link>
-          {/* <Link 
-            to="/admin/content-approval" 
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            <Icon icon={bell} size={20} />
-            <span className="font-medium">Course Content Approval (2)</span>
-          </Link> */}
         </nav>
               {/* Logout Button */}
               <button 
@@ -198,22 +191,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Chat Overlay */}
-      {isChatOpen && (
-        <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-slide-in-right">
-          <div className="flex justify-between items-center p-4 border-b">
-            <h3 className="text-lg font-semibold">Chat Assistant</h3>
-            <button
-              onClick={() => setIsChatOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <Icon icon={x} size={20} />
-            </button>
-          </div>
-          <div className="h-[calc(100%-64px)]">
-            <Chat />
-          </div>
-        </div>
-      )}
+      <ChatOverlay isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }

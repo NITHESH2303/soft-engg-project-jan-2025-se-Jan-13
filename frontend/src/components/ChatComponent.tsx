@@ -49,6 +49,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setHistory(initialHistory);
@@ -74,13 +75,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
     const url = new URL(apiEndpoint);
     url.searchParams.append('query', query);
-    if (localStorage
-      .getItem("sub")) {
-    const userId = localStorage.getItem("sub");
-    if (userId) {
-      url.searchParams.append('user_id', userId);
+    if (localStorage.getItem("sub")) {
+      const userId = localStorage.getItem("sub");
+      if (userId) {
+        url.searchParams.append('user_id', userId);
+      }
     }
-       }
     if (courseId) {
       url.searchParams.append('course_id', courseId);
     }
@@ -160,6 +160,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, currentResponse]);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [input]);
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -186,6 +194,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     handleStream(input, courseId);
 
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const formatTime = (date?: Date) => {
@@ -299,10 +310,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
         <form onSubmit={handleFormSubmit} className="flex items-end gap-2">
           <div className="flex-1 relative">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
-              className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none min-h-[50px] max-h-[150px]"
+              className="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white 
+                       placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 
+                       resize-none min-h-[50px] max-h-[150px] transition-all duration-200"
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -330,7 +344,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="p-3 bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors duration-200 flex items-center justify-center disabled:bg-purple-800 disabled:opacity-50"
+            className="p-3 bg-purple-600 hover:bg-purple-700 rounded-xl transition-colors duration-200 
+                     flex items-center justify-center disabled:bg-purple-800 disabled:opacity-50
+                     transform hover:scale-105 active:scale-95"
           >
             <Icon icon={send} size={20} className="text-white" />
           </button>
