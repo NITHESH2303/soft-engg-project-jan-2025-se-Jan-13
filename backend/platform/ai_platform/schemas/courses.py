@@ -31,17 +31,19 @@ class CourseResponse(BaseModel):
         from_attributes = True  # Enable ORM mode for SQLAlchemy models
 
 
-# Deadline schema for response
 class DeadlineResponse(BaseModel):
     id: int
     course_id: int
-    assignment_no: int
+    assignment_no: int | None
     deadline: str
-    status: str
-    course_title: str  # Add this field
+    is_passed: bool
+    submitted: bool  # New field to indicate if assignment is submitted
+    assignment_type: str
+    title: str
+    course_title: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # For Pydantic V2
 
 
 # Assign course schema for request
