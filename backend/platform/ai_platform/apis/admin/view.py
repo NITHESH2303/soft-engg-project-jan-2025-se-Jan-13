@@ -2,14 +2,15 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from starlette import status
 
 from ai_platform.apis.admin.course_crud import update_course, get_courses, delete_course, get_course, create_course
 from ai_platform.apis.auth.auth import get_current_user
 from ai_platform.schemas.admin import AssignmentSubmissionResponse, AssignmentGradeRequest, \
     CourseUpdate, CourseCreate
-from ai_platform.schemas.admin_students import AllStudentsResponse, StudentResponse, ACourseResponse
+from ai_platform.schemas.admin_students import AllStudentsResponse, StudentResponse, ACourseResponse, \
+    AdminAssignmentSubmissionResponse
 from ai_platform.schemas.courses import AssignCourseResponse, AssignCourseRequest, CourseResponse
 from ai_platform.supafast.database import get_db
 from ai_platform.supafast.models.courses import Course, Assignment, AssignmentSubmission
@@ -189,19 +190,25 @@ def delete_existing_course(
     return {"message": "Course deleted successfully", "course_id": course_id}
 
 
-@router.get("/students", response_model=AllStudentsResponse)
+@router.get("/admin/students", response_model=AllStudentsResponse)
 def get_all_students(
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_user)  # Optional admin check
+        db: Session = Depends(get_db),
+        admin_user: User = Depends(get_current_user)  # Optional admin check
 ):
     """
-    Retrieve all students with their associated courses (completed, current, and pending)
+    Retrieve all students with their associated courses and assignment submissions
     """
     try:
-        # Query all students with their related courses
+        # Query all students with their related courses and submissions
         students = (
             db.query(Student)
             .join(User, Student.id == User.id)
+            .options(
+                joinedload(Student.completed_courses),
+                joinedload(Student.current_courses),
+                joinedload(Student.pending_courses),
+                joinedload(Student.submissions)  # Eager load submissions
+            )
             .all()
         )
 
@@ -224,7 +231,7 @@ def get_all_students(
                         title=course.title,
                         category=course.category,
                         description=course.description,
-                        icon=course.icon  # Added icon field
+                        icon=course.icon
                     )
                     for course in student.completed_courses
                 ],
@@ -234,7 +241,7 @@ def get_all_students(
                         title=course.title,
                         category=course.category,
                         description=course.description,
-                        icon=course.icon  # Added icon field
+                        icon=course.icon
                     )
                     for course in student.current_courses
                 ],
@@ -244,9 +251,23 @@ def get_all_students(
                         title=course.title,
                         category=course.category,
                         description=course.description,
-                        icon=course.icon  # Added icon field
+                        icon=course.icon
                     )
                     for course in student.pending_courses
+                ],
+                submissions=[
+                    AdminAssignmentSubmissionResponse(
+                        id=submission.id,
+                        assignment_id=submission.assignment_id,
+                        course_id=submission.course_id,
+                        week_id=submission.week_id,
+                        assignment_type=submission.assignment_type,
+                        submitted_at=submission.submitted_at,
+                        submission_content=submission.submission_content,
+                        score=submission.score,
+                        graded_at=submission.graded_at
+                    )
+                    for submission in student.submissions
                 ]
             )
             student_list.append(student_data)
