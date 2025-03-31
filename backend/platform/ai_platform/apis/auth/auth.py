@@ -28,6 +28,7 @@ class Token(BaseModel):
     token_type: str
     sub: str
     role: str
+    username: str
 
 
 # Token data model

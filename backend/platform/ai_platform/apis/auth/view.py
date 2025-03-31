@@ -99,6 +99,8 @@ async def login(
     return {"access_token": access_token,
             "token_type": "bearer",
             "sub": str(user.id),
-            "role": user.role}
+            "role": user.role,
+            "username": user.username,
+            }
 
 

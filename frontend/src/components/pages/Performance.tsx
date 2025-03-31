@@ -114,7 +114,7 @@ export default function Performance() {
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Performance Analytics</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-lg font-medium text-gray-600">21f3001255</span>
+          <span className="text-lg font-medium text-gray-600">{localStorage.getItem('username')}</span>
             <button 
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setIsChatOpen(true)}

@@ -33,7 +33,7 @@ const Sidebar: React.FC = () => {
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />
-          <h2 className="text-xl font-bold">Student</h2>
+          <h2 className="text-xl font-bold">{localStorage.getItem('username')}</h2>
           <Link 
             to="/student/profile" 
             className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"

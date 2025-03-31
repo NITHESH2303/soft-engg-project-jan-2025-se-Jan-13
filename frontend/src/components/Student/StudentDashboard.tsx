@@ -20,7 +20,7 @@ interface Deadline {
   course_title: string;
   assignment_no: number;
   deadline: string;
-  status: 'Pending' | 'Submitted';
+  submitted: boolean;
 }
 
 interface StudentData {
@@ -139,7 +139,7 @@ export default function StudentDashboard() {
                     course_title={deadline.course_title}
                     assignment_no={deadline.assignment_no}
                     deadline={deadline.deadline}
-                    status={deadline.status}
+                    submitted={deadline.submitted}
                   />
                 ))}
               </tbody>

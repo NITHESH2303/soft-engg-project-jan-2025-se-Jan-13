@@ -33,7 +33,15 @@ export default function Signup() {
             "category": "Programming",
             "icon": "💻",
             "description": "Build modern web applications using React"
-          }]} 
+          },
+          {
+            "id": 4,
+            "title": "Database Management System",
+            "category": "Programming",
+            "icon": "📊",
+            "description": "Learn about database and managing database for applications"
+          },
+        ]} 
         />
       </div>
     </div>

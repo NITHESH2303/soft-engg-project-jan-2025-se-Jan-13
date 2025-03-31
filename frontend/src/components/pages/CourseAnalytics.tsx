@@ -69,7 +69,7 @@ export default function CourseAnalytics() {
             alt="Profile"
             className="w-24 h-24 rounded-full mb-4"
           />
-          <h2 className="text-xl font-bold">21f3001255</h2>
+          <span className="text-lg font-medium text-gray-600">{localStorage.getItem('username')}</span>
           <Link 
             to="/profile" 
             className="mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
