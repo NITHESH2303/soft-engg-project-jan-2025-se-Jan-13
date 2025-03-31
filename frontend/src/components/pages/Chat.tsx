@@ -144,7 +144,7 @@ export default function Chat() {
             {/* Navigation Links */}
             <div className="mt-auto pt-4 border-t border-white/10">
               <Link 
-                to="/dashboard" 
+                to="/student/dashboard" 
                 className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 text-white transition-colors"
               >
                 <Icon icon={home} size={20} />
