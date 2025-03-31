@@ -21,6 +21,7 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
       localStorage.setItem('access_token', response.access_token);
       localStorage.setItem('sub', response.sub);
       localStorage.setItem('role', response.role);
+      localStorage.setItem('username', response.username);
       onLoginSuccess();
     } catch (err) {
       setError('Login failed. Please check your credentials.');

@@ -16,6 +16,7 @@ import Login from "./components/Student/Login";
 import StudentCoursePage from "./components/Student/StudentCoursePage";
 import WeeklyCourseContent from "./components/WeeklyCourseContent/WeeklyCourseContent";
 import AdminDashboard from "./components/pages/AdminDashboard";
+import StudentStats from "./components/Admin/StudentStats";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
           <Route path="/admin/customize-ai" Component={CustomizeAI} />
           <Route path="/admin/add-content" Component={AddContent} />
           <Route path="/admin/login" Component={InstructorLogin} />
+          <Route path="/admin/students" Component={StudentStats} />
 
           {/* Common Routes */}
           <Route path="/chat" Component={Chat} />

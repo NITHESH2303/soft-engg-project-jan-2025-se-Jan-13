@@ -190,7 +190,7 @@ def delete_existing_course(
     return {"message": "Course deleted successfully", "course_id": course_id}
 
 
-@router.get("/admin/students", response_model=AllStudentsResponse)
+@router.get("/students", response_model=AllStudentsResponse)
 def get_all_students(
         db: Session = Depends(get_db),
         admin_user: User = Depends(get_current_user)  # Optional admin check
