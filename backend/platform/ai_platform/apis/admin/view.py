@@ -7,12 +7,13 @@ from starlette import status
 
 from ai_platform.apis.admin.course_crud import update_course, get_courses, delete_course, get_course, create_course
 from ai_platform.apis.auth.auth import get_current_user
-from ai_platform.schemas.admin import AssignmentSubmissionResponse, AssignmentGradeRequest, CourseResponse, \
+from ai_platform.schemas.admin import AssignmentSubmissionResponse, AssignmentGradeRequest, \
     CourseUpdate, CourseCreate
-from ai_platform.schemas.courses import AssignCourseResponse, AssignCourseRequest
+from ai_platform.schemas.admin_students import AllStudentsResponse, StudentResponse, ACourseResponse
+from ai_platform.schemas.courses import AssignCourseResponse, AssignCourseRequest, CourseResponse
 from ai_platform.supafast.database import get_db
 from ai_platform.supafast.models.courses import Course, Assignment, AssignmentSubmission
-from ai_platform.supafast.models.users import User
+from ai_platform.supafast.models.users import User, Student
 
 router = APIRouter()
 
@@ -186,3 +187,71 @@ def delete_existing_course(
     if not deleted_course:
         raise HTTPException(status_code=404, detail="Course not found")
     return {"message": "Course deleted successfully", "course_id": course_id}
+
+
+@router.get("/admin/students", response_model=AllStudentsResponse)
+def get_all_students(
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(get_current_user)  # Optional admin check
+):
+    """
+    Retrieve all students with their associated courses (completed, current, and pending)
+    """
+    try:
+        # Query all students with their related courses
+        students = (
+            db.query(Student)
+            .join(User, Student.id == User.id)
+            .all()
+        )
+
+        if not students:
+            return {"students": []}
+
+        # Prepare response
+        student_list = []
+        for student in students:
+            student_data = StudentResponse(
+                id=student.id,
+                first_name=student.first_name,
+                last_name=student.last_name,
+                roll_number=student.roll_number,
+                email_id=student.email_id,
+                current_term=student.current_term,
+                completed_courses=[
+                    ACourseResponse(
+                        id=course.id,
+                        title=course.title,
+                        category=course.category,
+                        description=course.description,
+                        icon=course.icon  # Added icon field
+                    )
+                    for course in student.completed_courses
+                ],
+                current_courses=[
+                    ACourseResponse(
+                        id=course.id,
+                        title=course.title,
+                        category=course.category,
+                        description=course.description,
+                        icon=course.icon  # Added icon field
+                    )
+                    for course in student.current_courses
+                ],
+                pending_courses=[
+                    ACourseResponse(
+                        id=course.id,
+                        title=course.title,
+                        category=course.category,
+                        description=course.description,
+                        icon=course.icon  # Added icon field
+                    )
+                    for course in student.pending_courses
+                ]
+            )
+            student_list.append(student_data)
+
+        return {"students": student_list}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving students: {str(e)}")
