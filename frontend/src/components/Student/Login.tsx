@@ -5,7 +5,12 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    navigate('/student/dashboard');
+    if(localStorage.getItem('role') == 'admin') {
+      navigate('/admin/dashboard');
+    }
+    else{
+      navigate("/student/dashboard");
+    }
   };
 
   return (
