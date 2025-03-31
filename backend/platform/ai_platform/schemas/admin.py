@@ -60,3 +60,5 @@ class CourseResponse(CourseBase):
 
     class Config:
         orm_mode = True
+
+
