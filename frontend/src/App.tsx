@@ -40,7 +40,7 @@ function App() {
           <Route path="/ta/dashboard" Component={TADashboard} />
           <Route path="/ta/login" Component={TALogin} />
           <Route path="/ta/manage-course/:courseId" Component={ManageCourse} />
-
+          <Route path="/ta/students" Component={StudentStats} />
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" Component={AdminDashboard} />

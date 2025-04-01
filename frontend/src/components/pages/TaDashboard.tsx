@@ -77,7 +77,7 @@ export default function TADashboard() {
             <span className="font-medium">Assignments</span>
           </Link>
           <Link 
-            to="/students" 
+            to="/ta/students" 
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={users} size={20} />

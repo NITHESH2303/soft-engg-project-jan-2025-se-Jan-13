@@ -18,10 +18,8 @@ def create_weekwise_content(db: Session, content: WeekwiseContentCreate):
         .first()
     )
     if existing_content:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Week {content.week_no} already exists for course {content.course_id}. Please update the existing content instead."
-        )
+        # update the existing content
+        return update_weekwise_content(db,content_id=existing_content.id,content_update=content)
 
     # Create the WeekwiseContent object
     db_content = WeekwiseContent(
@@ -97,7 +95,7 @@ def get_weekwise_content(db: Session, course_id: int, content_id: int):
 
 
 def update_weekwise_content(db: Session, content_id: int, content_update: WeekwiseContentUpdate):
-    # Fetch existing content
+    # Fetch existing content with related data
     db_content = (
         db.query(WeekwiseContent)
         .options(
@@ -112,19 +110,18 @@ def update_weekwise_content(db: Session, content_id: int, content_update: Weekwi
         raise HTTPException(status_code=404, detail="Weekwise content not found")
 
     # Update base fields if provided
-    if content_update.term:
+    if content_update.term is not None:
         db_content.term = content_update.term
-    if content_update.upload_date:
+    if content_update.upload_date is not None:
         db_content.upload_date = content_update.upload_date
 
     # Update Videos
     if content_update.video_lectures is not None:
-        # Get existing video IDs
         existing_video_ids = {video.id for video in db_content.videos}
-        new_video_ids = {video.id for video in content_update.video_lectures if video.id}
+        new_video_ids = {video.id for video in content_update.video_lectures if video.id is not None}
 
         # Delete videos not in the new payload
-        for video in db_content.videos[:]:  # [:] to avoid modifying list during iteration
+        for video in db_content.videos[:]:  # Use a copy to avoid modifying during iteration
             if video.id not in new_video_ids:
                 db.delete(video)
 
@@ -133,12 +130,13 @@ def update_weekwise_content(db: Session, content_id: int, content_update: Weekwi
             if video.id and video.id in existing_video_ids:
                 # Update existing video
                 db_video = db.query(VideoLecture).filter(VideoLecture.id == video.id).first()
-                db_video.title = video.title
-                db_video.transcript = video.transcript
-                db_video.duration = video.duration
-                db_video.video_link = video.video_link
+                if db_video:
+                    db_video.title = video.title
+                    db_video.transcript = video.transcript
+                    db_video.duration = video.duration
+                    db_video.video_link = video.video_link
             else:
-                # Add new video
+                # Add new video (no id specified, let DB auto-increment)
                 db_video = VideoLecture(
                     course_id=db_content.course_id,
                     week_no=db_content.week_no,
@@ -149,24 +147,29 @@ def update_weekwise_content(db: Session, content_id: int, content_update: Weekwi
                 )
                 db.add(db_video)
 
-    # Update Practice Assignments (similar logic)
+    # Update Practice Assignments
     if content_update.practice_assignments is not None:
         existing_practice_ids = {pa.id for pa in db_content.practice_assignments}
-        new_practice_ids = {pa.id for pa in content_update.practice_assignments if pa.id}
+        new_practice_ids = {pa.id for pa in content_update.practice_assignments if pa.id is not None}
 
+        # Delete practice assignments not in the new payload
         for pa in db_content.practice_assignments[:]:
             if pa.id not in new_practice_ids:
                 db.delete(pa)
 
+        # Add or update practice assignments
         for pa in content_update.practice_assignments:
             if pa.id and pa.id in existing_practice_ids:
+                # Update existing practice assignment
                 db_pa = db.query(PracticeAssignment).filter(PracticeAssignment.id == pa.id).first()
-                db_pa.title = pa.title
-                db_pa.description = pa.description
-                db_pa.assignment_content = pa.assignment_content
-                db_pa.is_coding_assignment = pa.is_coding_assignment
-                db_pa.deadline = pa.deadline
+                if db_pa:
+                    db_pa.title = pa.title
+                    db_pa.description = pa.description
+                    db_pa.assignment_content = pa.assignment_content
+                    db_pa.is_coding_assignment = pa.is_coding_assignment
+                    db_pa.deadline = pa.deadline
             else:
+                # Add new practice assignment (no id specified, let DB auto-increment)
                 db_pa = PracticeAssignment(
                     course_id=db_content.course_id,
                     week_no=db_content.week_no,
@@ -178,24 +181,29 @@ def update_weekwise_content(db: Session, content_id: int, content_update: Weekwi
                 )
                 db.add(db_pa)
 
-    # Update Graded Assignments (similar logic)
+    # Update Graded Assignments
     if content_update.graded_assignments is not None:
         existing_graded_ids = {ga.id for ga in db_content.graded_assignments}
-        new_graded_ids = {ga.id for ga in content_update.graded_assignments if ga.id}
+        new_graded_ids = {ga.id for ga in content_update.graded_assignments if ga.id is not None}
 
+        # Delete graded assignments not in the new payload
         for ga in db_content.graded_assignments[:]:
             if ga.id not in new_graded_ids:
                 db.delete(ga)
 
+        # Add or update graded assignments
         for ga in content_update.graded_assignments:
             if ga.id and ga.id in existing_graded_ids:
+                # Update existing graded assignment
                 db_ga = db.query(GradedAssignment).filter(GradedAssignment.id == ga.id).first()
-                db_ga.title = ga.title
-                db_ga.description = ga.description
-                db_ga.assignment_content = ga.assignment_content
-                db_ga.is_coding_assignment = ga.is_coding_assignment
-                db_ga.deadline = ga.deadline
+                if db_ga:
+                    db_ga.title = ga.title
+                    db_ga.description = ga.description
+                    db_ga.assignment_content = ga.assignment_content
+                    db_ga.is_coding_assignment = ga.is_coding_assignment
+                    db_ga.deadline = ga.deadline
             else:
+                # Add new graded assignment (no id specified, let DB auto-increment)
                 db_ga = GradedAssignment(
                     course_id=db_content.course_id,
                     week_no=db_content.week_no,
@@ -207,6 +215,12 @@ def update_weekwise_content(db: Session, content_id: int, content_update: Weekwi
                 )
                 db.add(db_ga)
 
-    db.commit()
-    db.refresh(db_content)
+    # Commit the transaction and refresh the object
+    try:
+        db.commit()
+        db.refresh(db_content)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
     return db_content
