@@ -52,6 +52,10 @@ This project focuses on developing an AI-driven agent to enhance the learning ex
    ```bash
    poetry install
    ```
+### Special Note: Create the .env file under the platform direcotry, refer .env.example for required keys needed to run the project
+#### If you are the SE Reviewer, we have provided the .env for faster setup, you just to replace the OpenAI api key and other keys are already set
+### Contact us on 22f3001755@ds.study.iitm.ac.in in case of any issue while setting up the project
+
 
 6. **Run the Application**  
    Use the following command to start the backend:  
