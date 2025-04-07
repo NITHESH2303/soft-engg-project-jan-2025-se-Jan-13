@@ -1,7 +1,7 @@
 // services/ta.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000:8000/api';
+const API_BASE_URL = 'http://65.0.106.97/api';
 
 // Fetch courses for a TA
 export const fetchCourses = async () => {
