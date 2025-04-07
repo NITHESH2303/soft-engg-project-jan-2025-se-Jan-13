@@ -45,7 +45,7 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
         setLoading(true);
         setError(null);
         try {
-          const response = await fetch(`http://127.0.0.1:8000/api/admin/weekwise-content/${courseId}/${weekNo}`);
+          const response = await fetch(`http://65.0.106.97:8000/api/admin/weekwise-content/${courseId}/${weekNo}`);
           const data = await response.json();
           setWeekContent(data);
         } catch (error) {

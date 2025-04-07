@@ -59,7 +59,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
   const fetchUserConversations = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/conversation/user/${userId}`, {
+      const response = await fetch(`http://65.0.106.97:8000/api/conversation/user/${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -122,7 +122,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
     const selected = recentChats.find(chat => chat.id === chatId);
     if (selected) {
       setSelectedConversationId(selected.conversationId);
-      fetch(`http://127.0.0.1:8000/api/conversation/user/${userId}`)
+      fetch(`http://65.0.106.97:8000/api/conversation/user/${userId}`)
         .then(res => res.json())
         .then(data => {
           const conversations = Array.isArray(data) ? data : [data];

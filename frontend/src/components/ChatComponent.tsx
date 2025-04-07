@@ -32,7 +32,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/host_agent',
+  apiEndpoint = 'http://65.0.106.97:8000/api/agent/host_agent',
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,
