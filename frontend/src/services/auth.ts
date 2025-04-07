@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://65.0.106.97:8000/api';
+const API_BASE_URL = 'https://65.0.106.97:8000/api';
 
 // Login function
 export const loginActual = async (username: string, password: string) => {

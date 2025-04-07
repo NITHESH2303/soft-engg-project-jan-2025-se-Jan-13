@@ -24,7 +24,7 @@ interface Agent {
   description: string;
 }
 
-const API_BASE_URL = 'http://65.0.106.97:8000/api/agent';
+const API_BASE_URL = 'https://65.0.106.97:8000/api/agent';
 
 export default function CustomizeAI() {
   const [agents, setAgents] = useState<Agent[]>([]);
