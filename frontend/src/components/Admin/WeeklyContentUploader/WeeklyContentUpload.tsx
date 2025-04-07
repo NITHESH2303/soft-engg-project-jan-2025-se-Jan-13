@@ -53,7 +53,7 @@ export default function WeeklyContentUpload() {
 
     // TODO: Implement actual API call
     try {
-      const response = await fetch('http://65.0.106.97/api/admin/weekwise-content', {
+      const response = await fetch('http://127.0.0.1:8000/api/admin/weekwise-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
