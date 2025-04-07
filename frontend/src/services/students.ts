@@ -1,7 +1,7 @@
 // services/student.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'https://65.0.106.97:8000/api/student';
+const API_BASE_URL = 'http://65.0.106.97:8000/api/student';
 
 
 // Fetch courses for a student
@@ -125,7 +125,7 @@ export const updateProfile = async () => {
 
 // // const fetchCourseContent = async () => {
 // //   try {
-// //     const response = await fetch(`https://65.0.106.97:8000/api/student/courses/${courseId}`);
+// //     const response = await fetch(`http://65.0.106.97:8000/api/student/courses/${courseId}`);
 // //     if (!response.ok) {
 // //       throw new Error('Failed to fetch course content');
 // //     }

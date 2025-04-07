@@ -75,7 +75,7 @@ export default function StudentStats() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('https://65.0.106.97:8000/api/admin/students', {
+        const response = await axios.get('http://65.0.106.97:8000/api/admin/students', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
