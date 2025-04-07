@@ -102,7 +102,7 @@ export default function WeeklyCourseContent({
       setLoadingCourse(true);
       setCourseError(null);
       try {
-        const response = await fetch(`http://65.0.106.97:8000/api/student/course/${courseId}/weeks`);
+        const response = await fetch(`http://127.0.0.1:8000:8000/api/student/course/${courseId}/weeks`);
         if (!response.ok) {
           throw new Error('Failed to fetch course details');
         }
@@ -146,8 +146,8 @@ export default function WeeklyCourseContent({
     
     try {
       const endpoint = isAdmin 
-        ? `http://65.0.106.97:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`
-        : `http://65.0.106.97:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`;
+        ? `http://127.0.0.1:8000:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`
+        : `http://127.0.0.1:8000:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`;
       
       const response = await fetch(endpoint);
       if (!response.ok) {
@@ -250,7 +250,7 @@ export default function WeeklyCourseContent({
     setLoadingWeeks(prev => ({ ...prev, [weekNo]: true }));
     try {
       const response = await fetch(
-        `http://65.0.106.97:8000/api/admin/weekwise-content/${courseId}/${weekNo}`,
+        `http://127.0.0.1:8000:8000/api/admin/weekwise-content/${courseId}/${weekNo}`,
         {
           method: 'PUT',
           headers: {

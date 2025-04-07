@@ -1,7 +1,7 @@
 import axios from "axios";
 
 
-const API_BASE_URL = 'http://65.0.106.97:8000/api/admin';
+const API_BASE_URL = 'http://127.0.0.1:8000:8000/api/admin';
 
 // Dummy FetchCourses for milestone3 Submission
 export const fetchCoursesAdmin = async () => {
