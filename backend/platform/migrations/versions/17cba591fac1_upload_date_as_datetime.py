@@ -23,7 +23,8 @@ def upgrade() -> None:
     op.alter_column('weekwise_content', 'upload_date',
                existing_type=sa.VARCHAR(),
                type_=sa.DateTime(timezone=True),
-               nullable=True)
+               nullable=True,
+                postgresql_using="upload_date::timestamp with time zone")
     # ### end Alembic commands ###
 
 

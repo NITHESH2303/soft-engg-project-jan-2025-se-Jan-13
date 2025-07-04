@@ -7,7 +7,7 @@ from ai_platform.supafast.models.weekwise_content import WeekwiseContent
 
 def get_course_weeks(db: Session, course_id: int) -> CourseWeekWiseDetails:
     # Fetch weekwise content for the course
-    weeks = db.query(WeekwiseContent).filter(WeekwiseContent.course_id == course_id).all()
+    weeks = db.query(WeekwiseContent).filter(WeekwiseContent.course_id == course_id).order_by(WeekwiseContent.week_no).all()
     if not weeks:
         raise HTTPException(status_code=404, detail="No content found for this course")
     course_content = []
