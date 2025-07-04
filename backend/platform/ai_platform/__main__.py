@@ -9,7 +9,7 @@ def main() -> None:
     uvicorn.run(
         "ai_platform.apis.application:get_app",
         # workers=settings.workers_count,
-        # host=settings.host,
+        host="0.0.0.0",
         # port=settings.port,
         # reload=settings.reload,
         # log_level=settings.log_level.lower(),

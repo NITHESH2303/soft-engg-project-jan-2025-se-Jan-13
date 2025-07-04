@@ -12,10 +12,12 @@ const LoginComponent: React.FC<LoginComponentProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
+    
     e.preventDefault();
     setError('');
 
     try {
+
       const response = await loginActual(username, password);
       
       localStorage.setItem('access_token', response.access_token);
