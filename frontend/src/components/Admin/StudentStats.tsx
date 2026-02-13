@@ -75,7 +75,7 @@ export default function StudentStats() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/admin/students', {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/students`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
@@ -193,22 +193,22 @@ export default function StudentStats() {
         </div>
 
         <nav className="space-y-2">
-          <Link 
-            to="/admin/dashboard" 
+          <Link
+            to="/admin/dashboard"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={home} size={20} />
             <span className="font-medium">Home</span>
           </Link>
-          <Link 
-            to="/admin/students" 
+          <Link
+            to="/admin/students"
             className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
           >
             <Icon icon={users} size={20} />
             <span className="font-medium">Students</span>
           </Link>
-          <Link 
-            to="/admin/customize-ai" 
+          <Link
+            to="/admin/customize-ai"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={settings} size={20} />
@@ -221,7 +221,7 @@ export default function StudentStats() {
       <div className="ml-64 p-8">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 animate-fade-in">Student Statistics</h1>
-          <button 
+          <button
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             onClick={() => setIsChatOpen(true)}
           >
@@ -235,14 +235,14 @@ export default function StudentStats() {
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Students</h3>
             <p className="text-4xl font-bold text-purple-600">{students.length}</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '100ms' }}>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Active Courses</h3>
             <p className="text-4xl font-bold text-blue-600">
               {new Set(students.flatMap(s => s.current_courses.map(c => c.id))).size}
             </p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '200ms' }}>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Submissions</h3>
             <p className="text-4xl font-bold text-green-600">
@@ -256,8 +256,8 @@ export default function StudentStats() {
           <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '300ms' }}>
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Course Distribution</h3>
             <div className="h-[300px] flex items-center justify-center">
-              <Doughnut 
-                data={calculateCourseDistribution()} 
+              <Doughnut
+                data={calculateCourseDistribution()}
                 options={{
                   responsive: true,
                   plugins: {
@@ -273,8 +273,8 @@ export default function StudentStats() {
           <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '400ms' }}>
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Course Completion Status</h3>
             <div className="h-[300px] flex items-center justify-center">
-              <Doughnut 
-                data={calculateCompletionStatus()} 
+              <Doughnut
+                data={calculateCompletionStatus()}
                 options={{
                   responsive: true,
                   plugins: {
@@ -292,8 +292,8 @@ export default function StudentStats() {
         <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '500ms' }}>
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Assignment Scores Trend</h3>
           <div className="h-[400px]">
-            <Line 
-              data={calculateScoresTrend()} 
+            <Line
+              data={calculateScoresTrend()}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -342,7 +342,7 @@ export default function StudentStats() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {students.map((student, index) => (
-                  <tr 
+                  <tr
                     key={student.id}
                     className="hover:bg-gray-50 transition-colors animate-fade-in"
                     style={{ animationDelay: `${index * 50}ms` }}

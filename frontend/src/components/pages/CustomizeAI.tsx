@@ -24,7 +24,7 @@ interface Agent {
   description: string;
 }
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/agent';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/agent`;
 
 export default function CustomizeAI() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -74,7 +74,7 @@ export default function CustomizeAI() {
     if (editingAgent) {
       try {
         const updatedAgent = await updateAgent(editingAgent);
-        setAgents(agents.map((a) => 
+        setAgents(agents.map((a) =>
           a.id === updatedAgent.id ? updatedAgent : a
         ));
         setEditingAgent(null);
@@ -119,22 +119,22 @@ export default function CustomizeAI() {
         </div>
 
         <nav className="space-y-2">
-          <Link 
-            to="/admin/dashboard" 
+          <Link
+            to="/admin/dashboard"
             className="flex items-center space-x-3 p-3 rounded-lg bg-purple-50 text-purple-600"
           >
             <Icon icon={home} size={20} />
             <span className="font-medium">Home</span>
           </Link>
-          <Link 
-            to="/admin/students" 
+          <Link
+            to="/admin/students"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={activity} size={20} />
             <span className="font-medium">Students</span>
           </Link>
-          <Link 
-            to="/admin/customize-ai" 
+          <Link
+            to="/admin/customize-ai"
             className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
           >
             <Icon icon={settings} size={20} />
@@ -147,7 +147,7 @@ export default function CustomizeAI() {
       <div className="flex-1 p-8">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Customize AI Agents</h1>
-          <button 
+          <button
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             onClick={() => setIsChatOpen(true)}
           >

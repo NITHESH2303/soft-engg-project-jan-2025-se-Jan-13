@@ -1,7 +1,7 @@
 // services/ta.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
 // Fetch courses for a TA
 export const fetchCourses = async () => {
@@ -49,7 +49,7 @@ export const addAssignment = async (assignmentData: any) => {
 // Update assignment status (e.g., mark as graded)
 export const updateAssignmentStatus = async (assignmentId: number, status: string) => {
   try {
-    const response = await axios.patch(`${API_BASE_URL}/ta/assignments/${assignmentId}`, 
+    const response = await axios.patch(`${API_BASE_URL}/ta/assignments/${assignmentId}`,
       { status },
       {
         headers: {

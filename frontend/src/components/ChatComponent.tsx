@@ -32,7 +32,7 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
-  apiEndpoint = 'http://127.0.0.1:8000/api/agent/host_agent',
+  apiEndpoint = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/agent/host_agent`,
   title = 'AI Assistant',
   initialHistory = [],
   onMessageAdded,
@@ -87,7 +87,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     if (conversationId) {
       url.searchParams.append('conversation_id', conversationId);
     }
-    
+
     const historyToSend = prepareHistoryForApi(history);
     const historyJson = JSON.stringify(historyToSend);
     url.searchParams.append('history', historyJson);
@@ -99,7 +99,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
 
     source.onmessage = (event) => {
       const chunk = JSON.parse(event.data);
-      
+
       if (chunk.type === 'text') {
         fullResponse += chunk.content;
         setCurrentResponse(fullResponse);
@@ -119,7 +119,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           content: fullResponse,
           timestamp: new Date(),
         };
-        
+
         setHistory((prevHistory) => {
           const newHistory = [...prevHistory, assistantMessage];
           if (onHistoryChange) {
@@ -127,11 +127,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           }
           return newHistory;
         });
-        
+
         if (onMessageAdded) {
           onMessageAdded(assistantMessage);
         }
-        
+
         source.close();
         setIsLoading(false);
         setCurrentResponse('');
@@ -212,7 +212,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
     ul: ({ children }: any) => <ul className="list-disc pl-6 mb-2">{children}</ul>,
     ol: ({ children }: any) => <ol className="list-decimal pl-6 mb-2">{children}</ol>,
     li: ({ children }: any) => <li className="mb-1">{children}</li>,
-    code: ({ inline, children }: any) => 
+    code: ({ inline, children }: any) =>
       inline ? (
         <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm">{children}</code>
       ) : (
@@ -241,9 +241,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
           {history.map((message, index) => (
             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`max-w-[80%] p-4 rounded-2xl ${
-                  message.role === 'user' ? 'bg-purple-600 text-white ml-auto' : 'bg-white/10 text-white'
-                }`}
+                className={`max-w-[80%] p-4 rounded-2xl ${message.role === 'user' ? 'bg-purple-600 text-white ml-auto' : 'bg-white/10 text-white'
+                  }`}
               >
                 {message.role === 'assistant' ? (
                   <ReactMarkdown

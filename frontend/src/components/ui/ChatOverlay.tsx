@@ -41,7 +41,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const userId = localStorage.getItem("sub");
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
   const fetchUserConversations = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/conversation/user/${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/conversation/user/${userId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -69,13 +69,13 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       const conversations = Array.isArray(data) ? data : [data];
-      
+
       const chats: RecentChat[] = conversations.map((conv: any, index: number) => {
         const lastMessage = conv.conversations.length > 0
           ? conv.conversations[conv.conversations.length - 1].content.substring(0, 30) +
-            (conv.conversations[conv.conversations.length - 1].content.length > 30 ? '...' : '')
+          (conv.conversations[conv.conversations.length - 1].content.length > 30 ? '...' : '')
           : "No messages yet";
-        
+
         return {
           id: index + 1,
           conversationId: conv.id,
@@ -122,7 +122,7 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
     const selected = recentChats.find(chat => chat.id === chatId);
     if (selected) {
       setSelectedConversationId(selected.conversationId);
-      fetch(`http://127.0.0.1:8000/api/conversation/user/${userId}`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/conversation/user/${userId}`)
         .then(res => res.json())
         .then(data => {
           const conversations = Array.isArray(data) ? data : [data];
@@ -145,10 +145,10 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
         prevChats.map(chat =>
           chat.id === selectedChat
             ? {
-                ...chat,
-                lastMessage: message.content.substring(0, 30) + (message.content.length > 30 ? '...' : ''),
-                timestamp: new Date(),
-              }
+              ...chat,
+              lastMessage: message.content.substring(0, 30) + (message.content.length > 30 ? '...' : ''),
+              timestamp: new Date(),
+            }
             : chat
         )
       );
@@ -182,9 +182,8 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className={`fixed ${
-        isMaximized ? 'inset-0 m-4' : 'bottom-4 right-4 w-96 h-[600px]'
-      } bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-2xl shadow-2xl border border-white/20 overflow-hidden transition-all duration-300 z-50 flex`}
+      className={`fixed ${isMaximized ? 'inset-0 m-4' : 'bottom-4 right-4 w-96 h-[600px]'
+        } bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 rounded-2xl shadow-2xl border border-white/20 overflow-hidden transition-all duration-300 z-50 flex`}
     >
       {/* Sidebar */}
       {isMaximized && (
@@ -208,9 +207,8 @@ const ChatOverlay: React.FC<ChatOverlayProps> = ({ isOpen, onClose }) => {
               recentChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className={`p-3 hover:bg-white/10 rounded-xl cursor-pointer transition-all duration-200 group ${
-                    selectedChat === chat.id ? 'bg-white/20' : ''
-                  }`}
+                  className={`p-3 hover:bg-white/10 rounded-xl cursor-pointer transition-all duration-200 group ${selectedChat === chat.id ? 'bg-white/20' : ''
+                    }`}
                   onClick={() => handleChatSelect(chat.id)}
                 >
                   <div className="flex items-center space-x-3">

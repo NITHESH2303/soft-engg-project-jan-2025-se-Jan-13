@@ -70,8 +70,8 @@ interface WeeklyCourseContentProps {
   onProgressUpdate?: (completed: number) => void;
 }
 
-export default function WeeklyCourseContent({ 
-  courseId, 
+export default function WeeklyCourseContent({
+  courseId,
   role,
   onProgressUpdate
 }: WeeklyCourseContentProps) {
@@ -79,21 +79,21 @@ export default function WeeklyCourseContent({
   const [courseData, setCourseData] = useState<CourseData | null>(null);
   const [loadingCourse, setLoadingCourse] = useState(true);
   const [courseError, setCourseError] = useState<string | null>(null);
-  
+
   // Week level state
   const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({});
   const [weekProgress, setWeekProgress] = useState<Record<number, number>>({});
   const [weekContents, setWeekContents] = useState<Record<number, WeekContent | null>>({});
   const [loadingWeeks, setLoadingWeeks] = useState<Record<number, boolean>>({});
   const [weekErrors, setWeekErrors] = useState<Record<number, string | null>>({});
-  
+
   // Content selection state
-  const [selectedContent, setSelectedContent] = useState<{ 
+  const [selectedContent, setSelectedContent] = useState<{
     weekNo: number;
-    type: 'video' | 'practice' | 'graded'; 
-    index: number 
+    type: 'video' | 'practice' | 'graded';
+    index: number
   } | null>(null);
-  
+
   const isAdmin = role === 'admin';
 
   // Fetch course data on initial load
@@ -102,26 +102,26 @@ export default function WeeklyCourseContent({
       setLoadingCourse(true);
       setCourseError(null);
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/student/course/${courseId}/weeks`);
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/student/course/${courseId}/weeks`);
         if (!response.ok) {
           throw new Error('Failed to fetch course details');
         }
         const data = await response.json();
         setCourseData(data);
-        
+
         // Initialize expanded state and progress for each week
         const initialExpanded: Record<number, boolean> = {};
         const initialProgress: Record<number, number> = {};
         const initialLoading: Record<number, boolean> = {};
         const initialErrors: Record<number, string | null> = {};
-        
+
         data.weeks.forEach((week: Week) => {
           initialExpanded[week.week_no] = false;
           initialProgress[week.week_no] = 0;
           initialLoading[week.week_no] = false;
           initialErrors[week.week_no] = null;
         });
-        
+
         setExpandedWeeks(initialExpanded);
         setWeekProgress(initialProgress);
         setLoadingWeeks(initialLoading);
@@ -143,40 +143,40 @@ export default function WeeklyCourseContent({
   const fetchWeekContent = async (weekNo: number) => {
     setLoadingWeeks(prev => ({ ...prev, [weekNo]: true }));
     setWeekErrors(prev => ({ ...prev, [weekNo]: null }));
-    
+
     try {
-      const endpoint = isAdmin 
-        ? `http://127.0.0.1:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`
-        : `http://127.0.0.1:8000/api/admin/weekwise-content/course/${courseId}/week/${weekNo}`;
-      
+      const endpoint = isAdmin
+        ? `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/weekwise-content/course/${courseId}/week/${weekNo}`
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/weekwise-content/course/${courseId}/week/${weekNo}`;
+
       const response = await fetch(endpoint);
       if (!response.ok) {
         throw new Error('Failed to fetch content');
       }
-      
+
       const data = await response.json();
-      
+
       const formattedData = {
         ...data,
         video_lectures: data.video_lectures || [],
         practice_assignments: data.practice_assignments || [],
         graded_assignments: data.graded_assignments || []
       };
-      
-      setWeekContents(prev => ({ 
-        ...prev, 
-        [weekNo]: formattedData 
+
+      setWeekContents(prev => ({
+        ...prev,
+        [weekNo]: formattedData
       }));
-      
+
       // Update progress if callback provided
       if (onProgressUpdate) {
         onProgressUpdate(calculateWeekProgress(weekNo, formattedData));
       }
     } catch (error) {
       console.error('Error fetching week content:', error);
-      setWeekErrors(prev => ({ 
-        ...prev, 
-        [weekNo]: 'Failed to fetch week content' 
+      setWeekErrors(prev => ({
+        ...prev,
+        [weekNo]: 'Failed to fetch week content'
       }));
     } finally {
       setLoadingWeeks(prev => ({ ...prev, [weekNo]: false }));
@@ -187,38 +187,38 @@ export default function WeeklyCourseContent({
   const calculateWeekProgress = (weekNo: number, weekContent?: WeekContent | null) => {
     const content = weekContent || weekContents[weekNo];
     if (!content) return 0;
-    
+
     // Calculate total items
-    const totalItems = 
-      content.video_lectures.length + 
-      content.practice_assignments.length + 
+    const totalItems =
+      content.video_lectures.length +
+      content.practice_assignments.length +
       content.graded_assignments.length;
-    
+
     if (totalItems === 0) return 0;
-    
+
     // Calculate viewed items (if the week is expanded, count all items as viewed)
     const isExpanded = expandedWeeks[weekNo];
     if (isExpanded) {
       return 100; // Return 100% when the week is expanded
     }
-    
+
     return 0;
   };
 
   // Handle expanding/collapsing a week
   const toggleWeekExpansion = (weekNo: number) => {
     const isCurrentlyExpanded = expandedWeeks[weekNo];
-    
+
     // If we're expanding and don't have content yet, fetch it
     if (!isCurrentlyExpanded && !weekContents[weekNo]) {
       fetchWeekContent(weekNo);
     }
-    
+
     setExpandedWeeks(prev => ({
       ...prev,
       [weekNo]: !prev[weekNo]
     }));
-    
+
     // Update progress
     if (!isCurrentlyExpanded) {
       setWeekProgress(prev => ({
@@ -231,13 +231,13 @@ export default function WeeklyCourseContent({
   // Handle selecting a specific content item
   const handleSelectContent = (weekNo: number, type: 'video' | 'practice' | 'graded', index: number) => {
     setSelectedContent({ weekNo, type, index });
-    
+
     // Update progress
     setWeekProgress(prev => ({
       ...prev,
       [weekNo]: (prev[weekNo] || 0) + 5
     }));
-    
+
     if (onProgressUpdate) {
       onProgressUpdate((weekProgress[weekNo] || 0) + 5);
     }
@@ -246,11 +246,11 @@ export default function WeeklyCourseContent({
   // Handle content updates (for admin role)
   const handleContentUpdate = async (weekNo: number, updatedContent: WeekContent) => {
     if (!isAdmin) return;
-    
+
     setLoadingWeeks(prev => ({ ...prev, [weekNo]: true }));
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/admin/weekwise-content/${courseId}/${weekNo}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/weekwise-content/${courseId}/${weekNo}`,
         {
           method: 'PUT',
           headers: {
@@ -259,11 +259,11 @@ export default function WeeklyCourseContent({
           body: JSON.stringify(updatedContent),
         }
       );
-      
+
       if (!response.ok) {
         throw new Error('Failed to update content');
       }
-      
+
       setWeekContents(prev => ({
         ...prev,
         [weekNo]: updatedContent
@@ -282,11 +282,11 @@ export default function WeeklyCourseContent({
   // Get the content to display in the main area
   const getSelectedContentItem = () => {
     if (!selectedContent) return null;
-    
+
     const { weekNo, type, index } = selectedContent;
     const weekContent = weekContents[weekNo];
     if (!weekContent) return null;
-    
+
     if (type === 'video') {
       return {
         type: 'video',
@@ -295,7 +295,7 @@ export default function WeeklyCourseContent({
           if (isAdmin && weekContent) {
             const updatedContent = {
               ...weekContent,
-              video_lectures: weekContent.video_lectures.map((v, i) => 
+              video_lectures: weekContent.video_lectures.map((v, i) =>
                 i === index ? updatedVideo : v
               )
             };
@@ -312,7 +312,7 @@ export default function WeeklyCourseContent({
           if (isAdmin && weekContent) {
             const updatedContent = {
               ...weekContent,
-              practice_assignments: weekContent.practice_assignments.map((a, i) => 
+              practice_assignments: weekContent.practice_assignments.map((a, i) =>
                 i === index ? updatedAssignment : a
               )
             };
@@ -329,7 +329,7 @@ export default function WeeklyCourseContent({
           if (isAdmin && weekContent) {
             const updatedContent = {
               ...weekContent,
-              graded_assignments: weekContent.graded_assignments.map((a, i) => 
+              graded_assignments: weekContent.graded_assignments.map((a, i) =>
                 i === index ? updatedAssignment : a
               )
             };
@@ -338,7 +338,7 @@ export default function WeeklyCourseContent({
         }
       };
     }
-    
+
     return null;
   };
 
@@ -350,19 +350,18 @@ export default function WeeklyCourseContent({
       <div className="w-64 bg-white h-full shadow-md overflow-y-auto">
         <div className="p-4">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Course Content</h2>
-          
+
           {loadingCourse && <LoadingSpinner />}
           {courseError && <ErrorMessage message={courseError} />}
-          
+
           {courseData?.weeks.map((week) => (
             <div key={week.week_no} className="mb-4">
               <button
                 onClick={() => toggleWeekExpansion(week.week_no)}
-                className={`w-full p-3 rounded-lg text-left transition-colors ${
-                  selectedContent?.weekNo === week.week_no
+                className={`w-full p-3 rounded-lg text-left transition-colors ${selectedContent?.weekNo === week.week_no
                     ? 'bg-purple-50 text-purple-700'
                     : 'hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">Week {week.week_no}</span>
@@ -387,40 +386,38 @@ export default function WeeklyCourseContent({
                   )}
                 </div>
               </button>
-              
+
               {expandedWeeks[week.week_no] && (
                 <div className="mt-2 ml-3 space-y-1">
                   {loadingWeeks[week.week_no] && <LoadingSpinner />}
                   {weekErrors[week.week_no] && <ErrorMessage message={weekErrors[week.week_no] || ''} />}
-                  
+
                   {weekContents[week.week_no]?.video_lectures.map((video, idx) => (
                     <button
                       key={`video-${idx}`}
                       onClick={() => handleSelectContent(week.week_no, 'video', idx)}
-                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${
-                        selectedContent?.weekNo === week.week_no && 
-                        selectedContent?.type === 'video' && 
-                        selectedContent?.index === idx
+                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${selectedContent?.weekNo === week.week_no &&
+                          selectedContent?.type === 'video' &&
+                          selectedContent?.index === idx
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
-                      }`}
+                        }`}
                     >
                       <BookOpen className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="truncate">{video.title}</span>
                     </button>
                   ))}
-                  
+
                   {weekContents[week.week_no]?.practice_assignments.map((assignment, idx) => (
                     <button
                       key={`practice-${idx}`}
                       onClick={() => handleSelectContent(week.week_no, 'practice', idx)}
-                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${
-                        selectedContent?.weekNo === week.week_no && 
-                        selectedContent?.type === 'practice' && 
-                        selectedContent?.index === idx
+                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${selectedContent?.weekNo === week.week_no &&
+                          selectedContent?.type === 'practice' &&
+                          selectedContent?.index === idx
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
-                      }`}
+                        }`}
                     >
                       <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="truncate">
@@ -428,18 +425,17 @@ export default function WeeklyCourseContent({
                       </span>
                     </button>
                   ))}
-                  
+
                   {weekContents[week.week_no]?.graded_assignments.map((assignment, idx) => (
                     <button
                       key={`graded-${idx}`}
                       onClick={() => handleSelectContent(week.week_no, 'graded', idx)}
-                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${
-                        selectedContent?.weekNo === week.week_no && 
-                        selectedContent?.type === 'graded' && 
-                        selectedContent?.index === idx
+                      className={`flex items-center text-sm w-full py-2 px-3 rounded-md ${selectedContent?.weekNo === week.week_no &&
+                          selectedContent?.type === 'graded' &&
+                          selectedContent?.index === idx
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-purple-600'
-                      }`}
+                        }`}
                     >
                       <Award className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="truncate">
@@ -466,7 +462,7 @@ export default function WeeklyCourseContent({
                 onUpdate={selectedItem.onUpdate}
               />
             )}
-            
+
             {selectedItem.type === 'assignment' && (
               <AssignmentViewer
                 assignment={selectedItem.content}

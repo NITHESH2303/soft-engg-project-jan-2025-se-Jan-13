@@ -38,14 +38,14 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
   const [weekContent, setWeekContent] = useState<WeekContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (expanded && !weekContent) {
       const fetchWeekContent = async () => {
         setLoading(true);
         setError(null);
         try {
-          const response = await fetch(`http://127.0.0.1:8000/api/admin/weekwise-content/${courseId}/${weekNo}`);
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/weekwise-content/${courseId}/${weekNo}`);
           const data = await response.json();
           setWeekContent(data);
         } catch (error) {
@@ -93,14 +93,14 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                 {weekContent.videos.length} videos · {weekContent.practice_assignments.length + weekContent.graded_assignments.length} assignments
               </span>
             )}
-            <Icon 
-              icon={expanded ? chevronUp : chevronDown} 
+            <Icon
+              icon={expanded ? chevronUp : chevronDown}
               size={24}
               className="text-indigo-500"
             />
           </div>
         </button>
-        
+
         {expanded && (
           <div className="px-6 py-4 border-t border-gray-100">
             {loading && (
@@ -108,14 +108,14 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent"></div>
               </div>
             )}
-            
+
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-lg">
                 <p className="font-medium">{error}</p>
                 <p className="text-sm mt-1">Please try again later or contact support if the issue persists.</p>
               </div>
             )}
-            
+
             {/* Content list section */}
             {weekContent && !selectedContent && (
               <div className="py-2">
@@ -141,7 +141,7 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                     </div>
                   </div>
                 )}
-                
+
                 {weekContent.practice_assignments.length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Practice Assignments</h4>
@@ -193,17 +193,17 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                 )}
               </div>
             )}
-            
+
             {/* Video content display */}
             {weekContent && selectedContent && selectedContent.type === 'video' && (() => {
               const video = weekContent.videos.find(v => v.id === selectedContent.id);
               if (!video) return null;
-              
+
               return (
                 <div className="mt-4 bg-white rounded-xl shadow-lg p-6 border border-gray-100 animate-fade-in">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-indigo-800">{video.title}</h2>
-                    <button 
+                    <button
                       onClick={() => setSelectedContent(null)}
                       className="text-gray-500 hover:text-gray-700 transition-colors"
                     >
@@ -213,7 +213,7 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       </svg>
                     </button>
                   </div>
-                  
+
                   <div className="aspect-w-16 aspect-h-9 bg-gray-900 rounded-lg mb-6 overflow-hidden shadow-md">
                     <iframe
                       width="100%"
@@ -227,12 +227,12 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       className="w-full h-full"
                     ></iframe>
                   </div>
-                  
+
                   <div className="flex items-center mb-4 text-indigo-600">
                     <Icon icon={clock} size={16} className="mr-2" />
                     <p className="text-sm font-medium">Duration: {video.duration}</p>
                   </div>
-                  
+
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-lg font-medium text-gray-800 mb-2">Transcript</h3>
                     <p className="text-gray-700 leading-relaxed">{video.transcript}</p>
@@ -240,17 +240,17 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                 </div>
               );
             })()}
-            
+
             {/* Practice assignment display */}
             {weekContent && selectedContent && selectedContent.type === 'practice' && (() => {
               const assignment = weekContent.practice_assignments.find(pa => pa.id === selectedContent.id);
               if (!assignment) return null;
-              
+
               return (
                 <div className="mt-4 bg-white rounded-xl shadow-lg p-6 border border-gray-100 animate-fade-in">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-indigo-800">Practice Assignment</h2>
-                    <button 
+                    <button
                       onClick={() => setSelectedContent(null)}
                       className="text-gray-500 hover:text-gray-700 transition-colors"
                     >
@@ -260,13 +260,13 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       </svg>
                     </button>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-3 mb-4">
                     <div className="flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">
                       <Icon icon={calendar} size={16} className="mr-2" />
                       <p className="text-sm font-medium">Due: {assignment.deadline}</p>
                     </div>
-                    
+
                     <div className="flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">
                       <Icon icon={assignment.is_coding_assignment ? 'code' : book} size={16} className="mr-2" />
                       <p className="text-sm font-medium">
@@ -274,24 +274,24 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="border-t border-gray-100 pt-4">
                     <CourseAssignment />
                   </div>
                 </div>
               );
             })()}
-            
+
             {/* Graded assignment display */}
             {weekContent && selectedContent && selectedContent.type === 'graded' && (() => {
               const assignment = weekContent.graded_assignments.find(ga => ga.id === selectedContent.id);
               if (!assignment) return null;
-              
+
               return (
                 <div className="mt-4 bg-white rounded-xl shadow-lg p-6 border border-gray-100 animate-fade-in">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-indigo-800">Graded Assignment</h2>
-                    <button 
+                    <button
                       onClick={() => setSelectedContent(null)}
                       className="text-gray-500 hover:text-gray-700 transition-colors"
                     >
@@ -301,13 +301,13 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       </svg>
                     </button>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-3 mb-4">
                     <div className="flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">
                       <Icon icon={calendar} size={16} className="mr-2" />
                       <p className="text-sm font-medium">Due: {assignment.deadline}</p>
                     </div>
-                    
+
                     <div className="flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">
                       <Icon icon={assignment.is_coding_assignment ? 'code' : book} size={16} className="mr-2" />
                       <p className="text-sm font-medium">
@@ -315,7 +315,7 @@ export default function WeeklyCourseContent({ courseId, weekNo }: { courseId: nu
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="border-t border-gray-100 pt-4">
                     <CourseAssignment />
                   </div>

@@ -53,7 +53,7 @@ export default function WeeklyContentUpload() {
 
     // TODO: Implement actual API call
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/admin/weekwise-content', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/admin/weekwise-content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,21 +80,21 @@ export default function WeeklyContentUpload() {
         <WeekSelector weekNo={weekNo} setWeekNo={setWeekNo} />
 
         {/* Video Lectures */}
-        <VideoLectureSection 
-          videoLectures={videoLectures} 
-          setVideoLectures={setVideoLectures} 
+        <VideoLectureSection
+          videoLectures={videoLectures}
+          setVideoLectures={setVideoLectures}
         />
 
         {/* Practice Assignments */}
-        <PracticeAssignmentSection 
-          practiceAssignments={practiceAssignments} 
-          setPracticeAssignments={setPracticeAssignments} 
+        <PracticeAssignmentSection
+          practiceAssignments={practiceAssignments}
+          setPracticeAssignments={setPracticeAssignments}
         />
 
         {/* Graded Assignments */}
-        <GradedAssignmentSection 
-          gradedAssignments={gradedAssignments} 
-          setGradedAssignments={setGradedAssignments} 
+        <GradedAssignmentSection
+          gradedAssignments={gradedAssignments}
+          setGradedAssignments={setGradedAssignments}
         />
 
         {/* Submit Button */}

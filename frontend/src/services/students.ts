@@ -1,7 +1,7 @@
 // services/student.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/student';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'}/student`;
 
 
 // Fetch courses for a student
@@ -40,41 +40,41 @@ export const fetchStudentData = async () => {
     })
 
     return response.data;
-  } catch (error){
+  } catch (error) {
     throw new Error('Failed to fetch student data')
   }
 }
 
 //Fetch student weekly course content
 export const fetchCourseContent = async (courseId: string | undefined) => {
-  try{
+  try {
     const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access_token')}`
       }
     })
-    
+
     return response.data
-  } catch (error){
+  } catch (error) {
     throw new Error('Failed to fetch course content')
   }
-} 
+}
 
 
 //Fetch student weekly course content
 export const fetchCourseDetails = async (courseId: string | undefined) => {
-  try{
+  try {
     const response = await axios.get(`${API_BASE_URL}/course/${courseId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access_token')}`
       }
     })
-    
+
     return response.data
-  } catch (error){
+  } catch (error) {
     throw new Error('Failed to fetch course content')
   }
-} 
+}
 
 //Post request to update profile
 export const updateProfile = async () => {
