@@ -6,6 +6,12 @@ from ai_platform.supafast.models.weekwise_content import WeekwiseContent
 
 
 def get_course_weeks(db: Session, course_id: int) -> CourseWeekWiseDetails:
+    # SAFETY: Ensure course_id is an integer to prevent database crash
+    try:
+        course_id = int(course_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail=f"Invalid course_id: {course_id}. Must be an integer.")
+
     # Fetch weekwise content for the course
     weeks = db.query(WeekwiseContent).filter(WeekwiseContent.course_id == course_id).order_by(WeekwiseContent.week_no).all()
     if not weeks:

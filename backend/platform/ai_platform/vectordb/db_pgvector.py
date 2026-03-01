@@ -1,6 +1,5 @@
-import json
 import sqlalchemy
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
 import os
 from langchain_community.document_loaders import DataFrameLoader
@@ -16,8 +15,7 @@ except Exception as e:
 
 class PgvectorDB:
     def __init__(self, collection_name, connection_str,
-                 embedding_fn=OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"),
-                                               model="text-embedding-3-small")):
+                 embedding_fn=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")):
         self.vectorstore = PGVector(
             embeddings=embedding_fn,
             collection_name=collection_name,

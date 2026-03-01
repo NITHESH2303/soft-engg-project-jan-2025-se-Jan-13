@@ -13,6 +13,12 @@ def create_course(db: Session, course: CourseCreate):
 
 
 def get_course(db: Session, course_id: int):
+    # SAFETY: Ensure course_id is an integer to prevent database crash
+    try:
+        course_id = int(course_id)
+    except (ValueError, TypeError):
+        return None
+        
     return db.query(Course).filter(Course.id == course_id).first()
 
 

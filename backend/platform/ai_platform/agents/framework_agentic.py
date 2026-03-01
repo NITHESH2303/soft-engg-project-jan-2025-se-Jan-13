@@ -11,7 +11,10 @@ from ai_platform.vectordb.db_pgvector import PgvectorDB
 
 class Agents:
     def __init__(self):
-        self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.openai_client = OpenAI(
+            api_key=os.environ.get("GROQ_API_KEY"),
+            base_url=os.environ.get("OPENAI_API_BASE")
+        )
         self.db = next(get_db())
         self.agents = self._load_agents()
 
@@ -66,37 +69,43 @@ class Agents:
         }
 
         completion = self.openai_client.chat.completions.create(**model_params)
-        # For now handling single tool call
+        
         tool_args = ""
         tool_name = ""
         tool_id = ""
         tool_call_object = None
+        
         for chunk in completion:
-            # Handle content chunks
-            if chunk.choices[0].delta.content:
-                yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
+            if not chunk.choices:
+                continue
+                
+            delta = chunk.choices[0].delta
 
-            # Handle tool calls - this is the problematic part
-            if chunk.choices[0].delta.tool_calls:
-                if chunk.choices[0].delta.tool_calls[0]:
-                    if chunk.choices[0].delta.tool_calls[0].function.arguments:
-                        tool_args += chunk.choices[0].delta.tool_calls[0].function.arguments
-                        continue
-                    else:
-                        # If argument is empty then it must be first chunk so get tool id and name
-                        tool_call_object = chunk.choices[0].delta.tool_calls
-                        tool_name += chunk.choices[0].delta.tool_calls[0].function.name
-                        tool_id += chunk.choices[0].delta.tool_calls[0].id
+            if delta.content:
+                yield json.dumps({"type": "text", "content": delta.content})
 
-            if not chunk.choices[0].delta.tool_calls and chunk.choices[0].finish_reason == "tool_calls":
-                #If finish reason is tool calls then break this and call the tool and start another streaming
+            # Handle tool calls
+            if delta.tool_calls:
+                for tc in delta.tool_calls:
+                    if tc.id:
+                        tool_id = tc.id
+                        tool_call_object = delta.tool_calls
+                    if tc.function:
+                        if tc.function.name:
+                            tool_name += tc.function.name
+                        if tc.function.arguments:
+                            tool_args += tc.function.arguments
+            
+            if chunk.choices[0].finish_reason == "tool_calls":
                 break
 
-        # Now if the loop breaks using tool call, then call the tool and yield the final chunks
-        # Handle tool calls
         if tool_name == "get_course_content":
-            args = json.loads(tool_args)
-            print(f"Tool call detected: get_course_content with args {args}")
+            try:
+                args = json.loads(tool_args)
+            except json.JSONDecodeError:
+                yield json.dumps({"type": "error", "content": "Error parsing tool arguments"})
+                return
+
             content = get_course_content(next(get_db()), **args)
             messages.append({
                 "role": "assistant",
@@ -108,7 +117,6 @@ class Agents:
                 "content": json.dumps(content),
                 "tool_call_id": tool_id
             })
-            # Step 3: Stream the final response
             stream = self.openai_client.chat.completions.create(
                 messages=messages,
                 model=agent.model_name,
@@ -117,7 +125,6 @@ class Agents:
             for chunk in stream:
                 if chunk.choices[0].delta.content:
                     yield json.dumps({"type": "text", "content": chunk.choices[0].delta.content})
-        # Finally reset the tool metadata and yield end
         tool_id = ""
         tool_name = ""
         tool_args = ""
@@ -162,7 +169,6 @@ class Agents:
         response = completion.choices[0].message
 
         if response.tool_calls and not is_json_response:
-            # Create a new messages array with the original messages plus the assistant's response
             tool_messages = messages.copy()
             tool_messages.append({
                 "role": "assistant",
@@ -170,7 +176,6 @@ class Agents:
                 "tool_calls": response.tool_calls
             })
 
-            # Now add the tool response
             for tool_call in response.tool_calls:
                 if tool_call.function.name == "get_course_content":
                     args = json.loads(tool_call.function.arguments)
@@ -181,7 +186,6 @@ class Agents:
                         "tool_call_id": tool_call.id
                     })
 
-            # Make the final call with the tool responses included
             final_completion = self.openai_client.chat.completions.create(
                 messages=tool_messages,
                 model=agent.model_name,
@@ -207,7 +211,6 @@ class Agents:
             yield json.dumps({"type": "error", "content": "Agent not found"})
             return
 
-        # If this is a host-like agent, use a parser-like agent first
         if "host" in agent.name.lower():
             parser_agent_id = next(
                 (id for id, a in self.agents.items() if "parser" in a.name.lower()),
@@ -231,13 +234,11 @@ class Agents:
                         context = (context or "") + f"\nVector DB Context: {additional_context}"
 
         if streaming:
-            # For tracking tool calls
             messages = []
             if history:
                 for msg in history:
                     messages.append(msg)
 
-            # Keep track of accumulated text content to send to frontend
             accumulated_text = ""
 
             async for chunk in self.stream_response(

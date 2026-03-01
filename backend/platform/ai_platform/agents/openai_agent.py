@@ -15,7 +15,11 @@ from langchain_openai import ChatOpenAI
 class Agents(OpenAIStreaming):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.openai_client = OpenAI(
+            api_key=os.environ.get("GROQ_API_KEY"),
+            base_url=os.environ.get("OPENAI_API_BASE")
+        )
+        self.model_name = os.environ.get("GROQ_MODEL", "gpt-4o-mini")
         self.system_prompt = SystemMessage(content=INST_HOST_AGENT)
 
     async def stream_response(
@@ -45,7 +49,7 @@ class Agents(OpenAIStreaming):
         # Step 1: Synchronous call to handle tool calling
         completion = self.openai_client.chat.completions.create(
             messages=messages,
-            model="gpt-4o-mini",
+            model=self.model_name,
             tools=[course_content_tool]  # Use the same tool as call_openai_sync
         )
         response = completion.choices[0].message
@@ -72,7 +76,7 @@ class Agents(OpenAIStreaming):
                     # Step 3: Stream the final response
                     stream = self.openai_client.chat.completions.create(
                         messages=messages,
-                        model="gpt-4o-mini",
+                        model=self.model_name,
                         stream=True
                     )
                     for chunk in stream:
@@ -82,7 +86,7 @@ class Agents(OpenAIStreaming):
             # No tool calls, stream the response directly
             stream = self.openai_client.chat.completions.create(
                 messages=messages,
-                model="gpt-4o-mini",
+                model=self.model_name,
                 stream=True
             )
             for chunk in stream:
@@ -97,7 +101,7 @@ class Agents(OpenAIStreaming):
         # Initial call to OpenAI with tools
         completion = self.openai_client.chat.completions.create(
             messages=messages,
-            model="gpt-4o-mini",
+            model=self.model_name,
             tools=tools if tools else None
         )
 
@@ -167,7 +171,7 @@ class Agents(OpenAIStreaming):
 
         completion = self.openai_client.chat.completions.create(
             messages=messages,
-            model="gpt-4o-mini",
+            model=self.model_name,
             response_format={"type": "json_object"}
         )
         return json.loads(completion.choices[0].message.content)

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from sqlalchemy.orm import Session
 
 from ai_platform.supafast.models.courses import Course
@@ -20,7 +20,15 @@ def get_course_content(
     Fetch course content details from the database based on provided filters.
     Returns a structured dictionary for the AI agent to use.
     """
-    print(f"Calling tool get_course_content with args: {course_id}, {week_no}, {lecture_no}")
+    try:
+        course_id = int(course_id)
+        if week_no is not None: week_no = int(week_no)
+        if lecture_no is not None: lecture_no = int(lecture_no)
+        if graded_assignment_id is not None: graded_assignment_id = int(graded_assignment_id)
+        if practice_assignment_id is not None: practice_assignment_id = int(practice_assignment_id)
+    except (ValueError, TypeError):
+        return {"error": "Invalid input: course_id and other IDs must be numeric."}
+
     result = {"course_id": course_id, "content": {}}
 
     # Fetch course details

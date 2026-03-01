@@ -195,51 +195,7 @@ class StreamingRequest(BaseModel):
     metadata: Dict[str, str] | None
 
 
-# @router.post("/host_agent")
-# async def host_agent(request: StreamingRequest, db: Session = Depends(get_db)):
-#     """
-#     **Host an AI agent conversation and stream responses.**
-#
-#     **Args:**
-#         request (StreamingRequest): The request containing the user's message and interaction history.
-#
-#     **Returns:**
-#         StreamingResponse: The AI agent's response as a streaming event.
-#     """
-#     message = request.message
-#     history = request.history
-#     metadata = request.metadata
-#     course_id = metadata.get("course_id")
-#     if course_id:
-#         try:
-#             course_week_details = get_course_weeks(db=db, course_id=int(course_id))
-#             course_data = get_course(db=db, course_id=int(course_id))
-#             course_context = f"Below is current course details where user opened the chatbot: {course_data}"
-#         except Exception as e:
-#             print(e)
-#             raise HTTPException(status_code=500, detail=f"Error from backend:{e}")
-#     #
-#     else:
-#         course_context = None
-#     response = await agents.parser_agent(message, context=course_context)
-#     print("Parser Agent Response", response)
-#     collection_name = response['vector_index']
-#     print(f"Collection name to looked at.", collection_name)
-#     if collection_name == "general":
-#         context = ""
-#     else:
-#         vectordb = PgvectorDB(collection_name=collection_name, connection_str=os.getenv("SQLALCHEMY_DATABASE_URL"))
-#         context = vectordb.get_context_for_query(message, include_metadata=False)
-#         print(context)
-#     if course_id:
-#         context = context + (f" Below is the actual context for most recent user message:"
-#                              f"Course Detail: {course_data}"
-#                              f"Weekwise Details:\n{course_week_details}\n")
-#     response_stream = agents.stream_generator(await agents.host_agent(message,
-#                                                                       history=history,
-#                                                                       context=context, streaming=True))
-#
-#     return StreamingResponse(response_stream, media_type='text/event-stream')
+
 
 
 @router.post(
@@ -260,59 +216,7 @@ async def openai_streaming(request):
         media_type='text/event-stream')
 
 
-# @router.get("/stream")
-# async def stream_agent_response(query: str, course_id: int = None,
-#                                 history: Optional[str] = Query(None, description="JSON-encoded chat history"),
-#                                 db: Session = Depends(get_db),
-#                                 agent_id: Optional[int] = None):
-#     if agent_id:
-#         agent = get_agent(db, agent_id)
-#         print(agent)
-#     if course_id:
-#         try:
-#             course_week_details = get_course_weeks(db=db, course_id=course_id)
-#             course_data = get_course(db=db, course_id=course_id)
-#             course_context = f"Below is current course details where user opened the chatbot: {course_data}"
-#         except Exception as e:
-#             print(e)
-#             raise HTTPException(status_code=500, detail=f"Error from backend:{e}")
-#
-#     else:
-#         course_context = None
-#     response = await agents.parser_agent(query, context=course_context)
-#     print("Parser Agent Response", response)
-#     collection_name = response['vector_index']
-#     print(f"Collection name to looked at.", collection_name)
-#     if collection_name == "general":
-#         context = ""
-#     else:
-#         vectordb = PgvectorDB(collection_name=collection_name, connection_str=os.getenv("SQLALCHEMY_DATABASE_URL"))
-#         context = vectordb.get_context_for_query(query, include_metadata=False)
-#         print(context)
-#     if course_id:
-#         context = context + (f" Below is the actual context for most recent user message:"
-#                              f"Course Detail: {course_data}"
-#                              f"Weekwise Details:\n{course_week_details}\n")
-#
-#     async def event_generator():
-#         # Parse history if provided
-#         chat_history = []
-#         if history:
-#             try:
-#                 chat_history = json.loads(history)
-#                 if not isinstance(chat_history, list):
-#                     raise ValueError("History must be a list of message objects")
-#             except (json.JSONDecodeError, ValueError):
-#                 yield {"data": json.dumps({"type": "error", "content": "Invalid history format"})}
-#                 return
-#                 # Stream the response with history
-#
-#         async for chunk in agents.stream_response(query, course_id, chat_history, context=context):
-#             #simulate slow processing
-#             # time.sleep(5)
-#             yield {"data": chunk}
-#
-#     return EventSourceResponse(event_generator())
+
 
 
 @router.get("/host_agent")
@@ -331,6 +235,11 @@ async def stream_agent_response(
     # Set a default agent_id if none provided
     if not agent_id:
         agent_id = 8
+    else:
+        try:
+            agent_id = int(agent_id)
+        except (ValueError, TypeError):
+            agent_id = 8
 
     # Get agent from database to validate it exists
     agent = get_agent(db, agent_id)
@@ -342,6 +251,13 @@ async def stream_agent_response(
 
     # Prepare course context if course_id is provided
     course_context = None
+
+    if course_id:
+        try:
+            course_id = int(course_id)
+        except (ValueError, TypeError):
+            course_id = None
+    
     if course_id:
         try:
             course_week_details = get_course_weeks(db=db, course_id=course_id)
@@ -349,7 +265,6 @@ async def stream_agent_response(
             course_context = (f"Course Details: {course_data}\n"
                               f"Course Week Details: {course_week_details}")
         except Exception as e:
-            print(f"Error getting course data: {e}")
             raise HTTPException(status_code=500, detail=f"Error retrieving course data: {e}")
 
     # Parse chat history
@@ -364,7 +279,7 @@ async def stream_agent_response(
 
     # Handle conversation creation or retrieval
     current_conversation_id = conversation_id
-    if len(chat_history) == 1 and not conversation_id:  # New conversation # if only two messages, it means new chat
+    if (len(chat_history) == 1 and not conversation_id) or (chat_history and not conversation_id):  
         # Use provided title, first user message, or timestamp as fallback
         first_message = query[:50] if query else "New Chat"  # Truncate to 50 chars
         convo_title = title or first_message or f"Chat {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -383,11 +298,17 @@ async def stream_agent_response(
                 status_code=404,
                 content={"error": "Conversation not found or access denied"}
             )
-    else:  # History provided but no conversation_id
-        return JSONResponse(
-            status_code=400,
-            content={"error": "conversation_id required when providing history"}
+    else:  # Fallback for empty history and no ID
+        # Just use the query to start a new convo
+        first_message = query[:50] if query else "New Chat"
+        convo_title = title or first_message or f"Chat {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        convo_create = ConversationCreate(
+            agent_id=agent_id,
+            user_id=user_id,
+            conversations=[],
+            title=convo_title
         )
+        current_conversation_id = create_conversation(db, convo_create)
 
     # Function to generate streaming events and update conversation
     async def event_generator():
@@ -422,8 +343,7 @@ async def stream_agent_response(
                 modified_at=datetime.now()
             )
             updated_conversation = update_conversation(db, current_conversation_id, update_data)
-            print("Updated history")
-            # Include conversation_id in the final message
+            
             # Include conversation metadata in the final message
             yield {"data": json.dumps({
                 "type": "metadata",
@@ -434,7 +354,6 @@ async def stream_agent_response(
             })}
         except Exception as e:
             error_message = f"Error generating response: {str(e)}"
-            print(error_message)
             yield {"data": json.dumps({"type": "error", "content": error_message})}
         finally:
             yield {"data": json.dumps({"type": "end"})}

@@ -30,7 +30,6 @@ courses = [
 db.add_all(courses)
 db.commit()
 
-# Add assignments and deadlines
 student = db.query(User).filter(User.username == "pankaj").first()
 for course in courses:
     assignment = Assignment(student_id=student.id, course_id=course.id)

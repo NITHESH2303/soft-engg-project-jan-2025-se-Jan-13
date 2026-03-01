@@ -47,13 +47,10 @@ class ConversationInDB(ConversationBase):
         orm_mode = True
 
 
-# Request Model
 class CreateKnowledgeBaseRequest(BaseModel):
     vector_index: str = Field(..., description="Name of the vector index to be created")
     content: str = Field(..., description="The content to perform embedding")
 
-
-# Response Model
 class CreateKnowledgeBaseResponse(BaseModel):
     status: bool = Field(..., description="Indicates if the operation was successful")
     document_inserted_count: int = Field(..., description="Number of documents inserted")

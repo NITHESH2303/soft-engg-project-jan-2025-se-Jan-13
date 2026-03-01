@@ -17,6 +17,12 @@ def create_agent(db: Session, agent: AiAgentCreate):
 
 
 def get_agent(db: Session, agent_id: int):
+    # SAFETY: Ensure agent_id is an integer to prevent database crash
+    try:
+        agent_id = int(agent_id)
+    except (ValueError, TypeError):
+        return None
+
     return db.query(AiAgent).filter(AiAgent.id == agent_id).first()
 
 

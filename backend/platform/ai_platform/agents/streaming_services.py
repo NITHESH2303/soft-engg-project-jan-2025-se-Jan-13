@@ -16,7 +16,10 @@ load_dotenv(override=True)
 class OpenAIStreaming:
     def __init__(self, GENERATION_TIMEOUT_SEC=60):
         self.GENERATION_TIMEOUT_SEC = GENERATION_TIMEOUT_SEC
-        self.asyncClient = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.asyncClient = AsyncOpenAI(
+            api_key=os.getenv("GROQ_API_KEY"),
+            base_url=os.getenv("OPENAI_API_BASE")
+        )
 
     async def stream_generator(self, subscription):  # TODO: change here
         async with async_timeout.timeout(self.GENERATION_TIMEOUT_SEC):
@@ -45,7 +48,7 @@ class OpenAIStreaming:
             else:
                 messages.append({"role": "user", "content": prompt})
             stream = await self.asyncClient.chat.completions.create(
-                model="gpt-4o",
+                model=os.getenv("GROQ_MODEL", "gpt-4o"),
                 messages=messages,  # TODO: implement history
                 stream=True,
             )
@@ -61,7 +64,7 @@ class OpenAIStreaming:
             else:
                 messages.append({"role": "user", "content": prompt})
             stream = await self.asyncClient.chat.completions.create(
-                model="gpt-4o-mini",
+                model=os.getenv("GROQ_MODEL", "gpt-4o-mini"),
                 messages=messages,  # TODO: implement history
                 stream=True,
             )
